@@ -306,7 +306,7 @@ export default function Admin() {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all">
                                                         <button
                                                             onClick={() => handleEdit(p)}
                                                             className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm"

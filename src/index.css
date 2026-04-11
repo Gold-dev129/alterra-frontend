@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #0a0a0a;
+  --accent: #d4af37;
+  --bg: #fafafa;
+  --surface: #ffffff;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 selection:bg-slate-900 selection:text-white antialiased;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-serif {
+    font-family: 'Instrument Serif', serif;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full;
+  }
+
+  .btn-premium {
+    @apply bg-slate-900 text-white px-8 py-3.5 rounded-full font-semibold transition-all duration-300 hover:bg-slate-800 hover:shadow-[0_8px_30px_rgb(0, 0, 0, 0.12)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-3.5 rounded-full font-semibold transition-all duration-300 hover:bg-white/20 active:scale-95;
+  }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)];
+  }
+
+  .input-standard {
+    @apply w-full rounded-2xl px-6 py-6 outline-none transition-all text-lg appearance-none;
+    background-color: #ffffff;
+    border: 2px solid #000000 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  }
+
+  .input-standard::placeholder {
+    @apply text-slate-400 text-xs text-opacity-70;
+  }
+
+  .input-standard:focus {
+    @apply border-slate-900 ring-4 ring-slate-900/5;
+    background-color: #f8fafc;
+  }
+
+  .input-admin {
+    @apply input-standard !rounded-[5px] py-4 text-base;
+  }
+}
+
+/* Animations */
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 border-4 border-solid border-slate-50 rounded-full hover:bg-slate-400 transition-colors;
+}
+
+/* Hide scrollbar on mobile but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

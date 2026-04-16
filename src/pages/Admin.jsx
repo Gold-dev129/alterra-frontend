@@ -28,7 +28,9 @@ export default function Admin() {
 
     useEffect(() => {
         if (token) {
-            fetchOrders(token);
+            fetchOrders(token).then(() => {
+                console.log('--- ADMIN DEBUG: Orders Fetched ---', orders);
+            });
         }
 
         // Socket Integration for Real-time Alerts

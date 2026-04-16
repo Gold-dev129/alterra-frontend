@@ -50,7 +50,7 @@ export default function Checkout() {
         reference: (new Date()).getTime().toString(),
         email: formData?.email || 'customer@example.com',
         amount: Math.round((total || 0) * 100) || 100,
-        publicKey: 'pk_test_97f3d4af4304c7056c37f0139689cb3725efc871',
+        publicKey: 'pk_live_de2d005e95d26e65feb09a0d9865bd43c6b6c5f3',
         currency: 'NGN',
         text: "Complete Purchase",
         onSuccess: (reference) => {

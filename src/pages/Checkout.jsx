@@ -15,10 +15,6 @@ export default function Checkout() {
     const [error, setError] = useState(null);
     const [isOrderSuccessful, setIsOrderSuccessful] = useState(false);
 
-    const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);
-    const shipping = 0;
-    const total = subtotal + shipping;
-
     const [formData, setFormData] = useState({
         email: user?.email || '',
         firstName: user?.name?.split(' ')[0] || '',
@@ -27,9 +23,20 @@ export default function Checkout() {
         deliveryMethod: 'delivery',
         address: '',
         city: '',
+        location: 'Lagos',
         zipCode: '',
         country: 'Nigeria'
     });
+
+    const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);
+    const shippingRates = {
+        'Lead City University': 4000,
+        'Lagos': 7000,
+        'Other States (Abuja, PH, Warri, etc.)': 8000,
+        'pickup': 0
+    };
+    const shipping = formData.deliveryMethod === 'pickup' ? 0 : shippingRates[formData.location];
+    const total = subtotal + shipping;
 
     useEffect(() => {
         if (user && !formData.email) {
@@ -53,11 +60,10 @@ export default function Checkout() {
         publicKey: 'pk_live_de2d005e95d26e65feb09a0d9865bd43c6b6c5f3',
         currency: 'NGN',
         text: "Complete Purchase",
-        onSuccess: (reference) => {
-            console.log('--- !!! RELIABILITY VERSION 8.0 SUCCESS !!! ---', reference);
-            window.alert("PAYMENT SUCCESSFUL!\n\nYour bag will be cleared and you'll be redirected now.");
-            localStorage.removeItem('alterra_cart');
-            try { clearCart(); } catch (e) { console.error(e); }
+        onSuccess: async (reference) => {
+            console.log('--- !!! RELIABILITY VERSION 8.1 SUCCESS !!! ---', reference);
+            window.alert("PAYMENT SUCCESSFUL!\n\nYour order is being saved and you'll be redirected now.");
+            
             const orderData = {
                 items: (cart || []).map(item => ({
                     product: item?._id,
@@ -66,16 +72,30 @@ export default function Checkout() {
                     quantity: item?.quantity,
                     size: item?.selectedSize,
                     color: item?.selectedColor,
-                    image: item?.images?.[0] || item?.image || '/placeholder.png'
+                    image: item?.images?.[0] || item?.image || '/placeholder.png',
+                    customNote: item?.customNote || ''
                 })),
-                shippingDetails: { ...formData },
+                shippingDetails: { ...formData, shippingFee: shipping },
                 subtotal,
                 shipping,
                 total,
-                paymentReference: reference?.reference || 'REF_8.0'
+                paymentReference: reference?.reference || reference?.trxref || 'REF_8.1'
             };
-            createOrder(orderData).catch(err => console.error(err));
-            window.location.assign('/');
+
+            try {
+                const result = await createOrder(orderData);
+                if (result.success) {
+                    localStorage.removeItem('alterra_cart');
+                    try { clearCart(); } catch (e) { console.error(e); }
+                    window.location.assign('/');
+                } else {
+                    window.alert("Order saved, but there was a minor issue clearing your cart. Your order is secure!");
+                    window.location.assign('/');
+                }
+            } catch (err) {
+                console.error("Order Creation Error:", err);
+                window.alert("Payment successful but order saving failed. Please contact support with your reference: " + orderData.paymentReference);
+            }
         },
         onClose: () => {
             console.log('--- Payment Modal Closed ---');
@@ -161,8 +181,21 @@ export default function Checkout() {
                                 </div>
 
                                 {formData.deliveryMethod === 'delivery' && (
-                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-                                        <input required name="address" value={formData.address} onChange={handleInputChange} placeholder="Full Shipping Address (City, State, Landmark)" className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all" />
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Select Delivery Destination</p>
+                                            <select
+                                                name="location"
+                                                value={formData.location}
+                                                onChange={handleInputChange}
+                                                className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all font-bold text-sm"
+                                            >
+                                                <option value="Lead City University">Lead City University (₦4,000)</option>
+                                                <option value="Lagos">Lagos (₦7,000)</option>
+                                                <option value="Other States (Abuja, PH, Warri, etc.)">Other States - Abuja, PH, Warri, etc. (₦8,000)</option>
+                                            </select>
+                                        </div>
+                                        <input required name="address" value={formData.address} onChange={handleInputChange} placeholder="Full Shipping Address (Street, Building, etc.)" className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all" />
                                     </motion.div>
                                 )}
 

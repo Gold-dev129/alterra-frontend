@@ -182,7 +182,7 @@ export default function ProductDetails() {
                                         value={customNote}
                                         onChange={(e) => setCustomNote(e.target.value)}
                                         placeholder="Add special instructions or preferences..."
-                                        className="input-standard min-h-[80px] py-4 text-sm bg-slate-50 border-transparent focus:bg-white"
+                                        className="input-standard min-h-[80px] py-4 text-sm bg-slate-50 border-transparent focus:bg-white rounded-2xl"
                                     />
                                 </div>
                             </div>

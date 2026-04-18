@@ -94,6 +94,7 @@ export default function Header() {
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <span className={`text-[10px] font-bold uppercase tracking-widest ${showWhiteStyle ? 'text-white/80' : 'text-slate-700'}`}>{user.name.split(' ')[0]}</span>
+                  <Link to="/my-orders" className={`text-[10px] font-black uppercase tracking-widest border px-3 py-1 rounded-lg transition-all ${showWhiteStyle ? 'border-white/20 text-white hover:bg-white hover:text-black' : 'border-slate-100 text-slate-500 hover:bg-slate-900 hover:text-white'}`}>Orders</Link>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -179,6 +180,13 @@ export default function Header() {
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <span className="text-slate-600">{user.email}</span>
+                    <Link
+                      to="/my-orders"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-lg font-serif italic text-slate-900 mt-4 border-b border-slate-900"
+                    >
+                      My Order History
+                    </Link>
                   </div>
                   <button
                     onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}

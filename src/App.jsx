@@ -11,6 +11,7 @@ import ProductDetails from './pages/ProductDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Checkout from './pages/Checkout';
+import Orders from './pages/Orders';
 import { useEffect } from 'react';
 
 const ProtectedAdmin = ({ children }) => {
@@ -74,6 +75,7 @@ function App() {
                   }
                 />
                 <Route path="/product/:id" element={<ProductDetails />} />
+                <Route path="/my-orders" element={<Orders />} />
               </Routes>
             </main>
 

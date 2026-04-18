@@ -232,6 +232,18 @@ export default function Checkout() {
                                     </div>
                                 )}
 
+                                <div className="bg-red-50 rounded-2xl p-6 border border-red-100 mt-8 mb-4">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white">
+                                            <AlertCircle className="w-4 h-4" />
+                                        </div>
+                                        <p className="text-xs font-black text-red-700 uppercase tracking-widest">Mandatory Policy Notice</p>
+                                    </div>
+                                    <p className="text-[11px] text-red-600 font-bold leading-relaxed italic">
+                                        At ALTERRA STUDIO, every piece is made to order. By proceeding with this payment, you acknowledge our strict <span className="underline decoration-2">NO REFUND POLICY</span>. Please double-check your color and size selections.
+                                    </p>
+                                </div>
+
                                 <div className="pt-4 text-center">
                                     <button
                                         type="button"
@@ -287,10 +299,6 @@ export default function Checkout() {
                                 <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-50 pt-4">
                                     <span className="font-serif italic text-2xl text-slate-900">Total</span>
                                     <span className="text-2xl font-bold tracking-tight text-slate-900">₦{(total || 0).toFixed(2)}</span>
-                                </div>
-                                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100 mt-4">
-                                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-1 leading-none">Important Policy</p>
-                                    <p className="text-[9px] text-amber-600 italic font-medium leading-relaxed">Please note: We have a **No Refund Policy**. Ensure all details are correct before completing purchase.</p>
                                 </div>
                             </div>
                         </div>

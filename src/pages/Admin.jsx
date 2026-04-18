@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Package, ShoppingBag, Trash2, AlertCircle,
-    Image, Loader2, Type, Tag, CheckCircle2
+    Image, Loader2, Type, Tag, CheckCircle2, Palette, Upload
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 
@@ -13,7 +13,9 @@ export default function Admin() {
     const { token } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editId, setEditId] = useState(null); // ID of product being edited
-    const [activeTab, setActiveTab] = useState('products'); // 'products' or 'orders'
+    const [activeTab, setActiveTab] = useState('products'); // 'products', 'orders', 'branding'
+    const [settings, setSettings] = useState({ logo_url: '', dashboard_header_url: '' });
+    const [isUpdatingBranding, setIsUpdatingBranding] = useState(false);
     const [status, setStatus] = useState({ type: '', message: '' });
     const [newOrderAlert, setNewOrderAlert] = useState(null);
     const [formData, setFormData] = useState({
@@ -47,6 +49,46 @@ export default function Admin() {
 
         return () => socket.disconnect();
     }, [token]);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch('https://alterra-node.onrender.com/api/settings');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    setSettings(data.data);
+                    if (data.data.dashboard_header_url) setDashboardHeaderImg(data.data.dashboard_header_url);
+                }
+            } catch (err) {
+                console.error('Failed to fetch settings:', err);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    const handleUpdateSetting = async (key, value) => {
+        setIsUpdatingBranding(true);
+        try {
+            const response = await fetch('https://alterra-node.onrender.com/api/settings', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ key, value })
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                setSettings(prev => ({ ...prev, [key]: value }));
+                setStatus({ type: 'success', message: `${key.replace(/_/g, ' ')} updated successfully!` });
+            }
+        } catch (err) {
+            setStatus({ type: 'error', message: 'Failed to update branding.' });
+        } finally {
+            setIsUpdatingBranding(false);
+            setTimeout(() => setStatus({ type: '', message: '' }), 3000);
+        }
+    };
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -502,6 +544,120 @@ export default function Admin() {
                                             </div>
                                         ))
                                     )}
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeTab === 'branding' && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="space-y-8"
+                            >
+                                <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200 overflow-hidden border border-slate-100">
+                                    <div className="bg-slate-900 p-10">
+                                        <h2 className="text-3xl font-serif font-bold text-white italic tracking-tight uppercase">Brand Identity</h2>
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 opacity-80">Official Logo & General Assets</p>
+                                    </div>
+                                    
+                                    <div className="p-10 space-y-12">
+                                        {/* Official Logo Section */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+                                            <div className="space-y-4">
+                                                <h3 className="text-xl font-serif font-bold text-slate-900 uppercase tracking-tight italic">Storefront Logo</h3>
+                                                <p className="text-slate-400 text-xs leading-relaxed">This logo will replace the text "ALTERRA" in the header and also set the official browser favicon (the icon on the browser tab).</p>
+                                                <div className="flex gap-4 pt-4">
+                                                    <label className="flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer">
+                                                        <Upload className="w-4 h-4" />
+                                                        {isUpdatingBranding ? 'Processing...' : 'Upload New Logo'}
+                                                        <input 
+                                                            type="file" 
+                                                            className="hidden" 
+                                                            accept="image/*"
+                                                            onChange={async (e) => {
+                                                                const file = e.target.files[0];
+                                                                if (!file) return;
+                                                                
+                                                                const formData = new FormData();
+                                                                formData.append('image', file);
+                                                                
+                                                                try {
+                                                                    setIsUpdatingBranding(true);
+                                                                    const res = await fetch('https://alterra-node.onrender.com/api/products/upload', {
+                                                                        method: 'POST',
+                                                                        body: formData
+                                                                    });
+                                                                    const data = await res.json();
+                                                                    if (data.url) {
+                                                                        await handleUpdateSetting('logo_url', data.url);
+                                                                    }
+                                                                } catch (err) {
+                                                                    console.error(err);
+                                                                    setStatus({ type: 'error', message: 'Logo upload failed.' });
+                                                                } finally {
+                                                                    setIsUpdatingBranding(false);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className="bg-slate-50 flex items-center justify-center p-10 rounded-[2.5rem] border border-dashed border-slate-200 min-h-[200px]">
+                                                {settings.logo_url ? (
+                                                    <img src={settings.logo_url} alt="Official Logo" className="max-h-24 w-auto object-contain" />
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em]">No Logo Set</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="h-px bg-slate-100" />
+
+                                        {/* Dashboard Header Section */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center text-left">
+                                            <div className="space-y-4">
+                                                <h3 className="text-xl font-serif font-bold text-slate-900 uppercase tracking-tight italic">Dashboard Hero</h3>
+                                                <p className="text-slate-400 text-xs leading-relaxed">The atmospheric image displayed at the top of your product management screen.</p>
+                                                <div className="flex gap-4 pt-4">
+                                                    <label className="flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer">
+                                                        <Upload className="w-4 h-4" />
+                                                        Update Hero Image
+                                                        <input 
+                                                            type="file" 
+                                                            className="hidden" 
+                                                            accept="image/*"
+                                                            onChange={async (e) => {
+                                                                const file = e.target.files[0];
+                                                                if (!file) return;
+                                                                const formData = new FormData();
+                                                                formData.append('image', file);
+                                                                try {
+                                                                    setIsUpdatingBranding(true);
+                                                                    const res = await fetch('https://alterra-node.onrender.com/api/products/upload', {
+                                                                        method: 'POST',
+                                                                        body: formData
+                                                                    });
+                                                                    const data = await res.json();
+                                                                    if (data.url) {
+                                                                        await handleUpdateSetting('dashboard_header_url', data.url);
+                                                                        setDashboardHeaderImg(data.url);
+                                                                    }
+                                                                } catch (err) {
+                                                                    setStatus({ type: 'error', message: 'Hero upload failed.' });
+                                                                } finally {
+                                                                    setIsUpdatingBranding(false);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-slate-100 shadow-lg">
+                                                <img src={dashboardHeaderImg} alt="Hero Preview" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/20" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </motion.div>
                         )}

@@ -34,19 +34,27 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-8">Shop</h4>
+            <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-8">Shop Selection</h4>
             <ul className="space-y-4">
               <li><Link to="/collection" className="text-slate-400 hover:text-white text-sm transition-colors">All Products</Link></li>
               <li><Link to="/collection" className="text-slate-400 hover:text-white text-sm transition-colors">New Arrivals</Link></li>
               <li><Link to="/collection" className="text-slate-400 hover:text-white text-sm transition-colors">Bestsellers</Link></li>
-              <li><Link to="/collection" className="text-slate-400 hover:text-white text-sm transition-colors">Collections</Link></li>
+              <li><Link to="/collection" className="text-slate-400 hover:text-white text-sm transition-colors">Exclusive Collections</Link></li>
             </ul>
+          </div>
+
+          <div className="md:col-span-2 mt-8 md:mt-0 pt-12 border-t border-white/5">
+                <h4 className="text-white font-bold uppercase tracking-wider text-[10px] mb-4 opacity-50 underline decoration-slate-700 underline-offset-4">Legal & Policy</h4>
+                <p className="text-slate-500 text-[11px] italic leading-relaxed max-w-2xl">
+                    <span className="text-amber-500/80 font-bold not-italic uppercase tracking-widest mr-2">No Refund Policy:</span>
+                    At ALTERRA STUDIO, every piece is prepared with meticulous care. Due to the exclusive and bespoke nature of our items, we maintain a strict **No Refund Policy**. Please ensure you check your size and color selections before completing your order.
+                </p>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-slate-500 text-[10px] uppercase tracking-widest font-medium">
+        <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-slate-600 text-[9px] uppercase tracking-[0.2em] font-black">
             © 2026 ALTERRA CLOTHING BRAND. ALL RIGHTS RESERVED.
           </p>
         </div>

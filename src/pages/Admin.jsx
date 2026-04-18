@@ -25,6 +25,7 @@ export default function Admin() {
         colors: ''
     });
     const [images, setImages] = useState([]);
+    const [dashboardHeaderImg, setDashboardHeaderImg] = useState('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop');
 
     useEffect(() => {
         if (token) {
@@ -120,6 +121,27 @@ export default function Admin() {
         }
     };
 
+    const handleClearOrders = async () => {
+        if (window.confirm('⚠️ CRITICAL: Are you sure you want to PERMANENTLY delete ALL orders? This cannot be undone.')) {
+            try {
+                const response = await fetch('https://alterra-node.onrender.com/api/orders/all', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.ok) {
+                    setStatus({ type: 'success', message: 'All orders cleared successfully' });
+                    fetchOrders(token);
+                } else {
+                    setStatus({ type: 'error', message: 'Failed to clear orders' });
+                }
+            } catch (err) {
+                setStatus({ type: 'error', message: 'Network error while clearing orders' });
+            }
+        }
+    };
+
     return (
         <div className="min-h-screen pt-32 pb-24 bg-slate-50">
             <AnimatePresence>
@@ -178,13 +200,30 @@ export default function Admin() {
                                     animate={{ opacity: 1, x: 0 }}
                                     className="bg-white rounded-[2rem] shadow-xl shadow-slate-200 overflow-hidden border border-slate-100"
                                 >
-                                    <div className="bg-slate-900 px-8 py-10 relative">
-                                        <h1 className="text-3xl font-serif font-bold text-white italic tracking-tight">
-                                            {editId ? 'Edit Piece' : 'Studio Dashboard'}
-                                        </h1>
-                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 opacity-60">
-                                            {editId ? 'Update Collection Item' : 'Add New Collection Piece'}
-                                        </p>
+                                    <div className="bg-slate-900 px-8 py-10 relative overflow-hidden">
+                                        {/* Dynamic Header Image */}
+                                        <div className="absolute inset-0 opacity-40">
+                                            <img src={dashboardHeaderImg} alt="" className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="relative z-10">
+                                            <h1 className="text-3xl font-serif font-bold text-white italic tracking-tight">
+                                                {editId ? 'Edit Piece' : 'Studio Dashboard'}
+                                            </h1>
+                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 opacity-80">
+                                                {editId ? 'Update Collection Item' : 'Add New Collection Piece'}
+                                            </p>
+                                        </div>
+                                        <div className="absolute bottom-4 right-8 flex gap-2 z-10">
+                                            <button 
+                                                onClick={() => {
+                                                    const url = window.prompt('Enter new Header Image URL:', dashboardHeaderImg);
+                                                    if (url) setDashboardHeaderImg(url);
+                                                }}
+                                                className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-[9px] font-bold uppercase px-3 py-1.5 rounded-lg border border-white/20 transition-all"
+                                            >
+                                                Change Header Image
+                                            </button>
+                                        </div>
                                         {editId && (
                                             <button
                                                 onClick={handleCancelEdit}
@@ -336,8 +375,18 @@ export default function Admin() {
                                 animate={{ opacity: 1, x: 0 }}
                                 className="space-y-6"
                             >
-                                <div className="bg-slate-900 rounded-[2rem] p-8 text-white text-center sm:text-left">
-                                    <h1 className="text-3xl font-serif font-bold italic tracking-tight">Custom Orders</h1>
+                                <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col sm:flex-row justify-between items-center gap-6">
+                                    <div>
+                                        <h1 className="text-3xl font-serif font-bold italic tracking-tight">Custom Orders</h1>
+                                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 opacity-60">Management Panel</p>
+                                    </div>
+                                    <button 
+                                        onClick={handleClearOrders}
+                                        className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                    >
+                                        Clear All Orders
+                                    </button>
+                                </div>
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 opacity-60">Manage User Production Inputs</p>
                                 </div>
 

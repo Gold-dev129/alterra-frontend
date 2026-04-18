@@ -31,6 +31,7 @@ export default function Checkout() {
     const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);
     const shippingRates = {
         'Lead City University': 4000,
+        'Ibadan (Inside City)': 4000,
         'Lagos': 7000,
         'Other States (Abuja, PH, Warri, etc.)': 8000,
         'pickup': 0
@@ -191,6 +192,7 @@ export default function Checkout() {
                                                 className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all font-bold text-sm"
                                             >
                                                 <option value="Lead City University">Lead City University (₦4,000)</option>
+                                                <option value="Ibadan (Inside City)">Ibadan (₦4,000)</option>
                                                 <option value="Lagos">Lagos (₦7,000)</option>
                                                 <option value="Other States (Abuja, PH, Warri, etc.)">Other States - Abuja, PH, Warri, etc. (₦8,000)</option>
                                             </select>
@@ -285,6 +287,10 @@ export default function Checkout() {
                                 <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-50 pt-4">
                                     <span className="font-serif italic text-2xl text-slate-900">Total</span>
                                     <span className="text-2xl font-bold tracking-tight text-slate-900">₦{(total || 0).toFixed(2)}</span>
+                                </div>
+                                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100 mt-4">
+                                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-1 leading-none">Important Policy</p>
+                                    <p className="text-[9px] text-amber-600 italic font-medium leading-relaxed">Please note: We have a **No Refund Policy**. Ensure all details are correct before completing purchase.</p>
                                 </div>
                             </div>
                         </div>

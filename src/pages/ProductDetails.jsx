@@ -13,6 +13,7 @@ export default function ProductDetails() {
     const [selectedSize, setSelectedSize] = useState('M');
     const [selectedColor, setSelectedColor] = useState('Black');
     const [customNote, setCustomNote] = useState('');
+    const [showSizeChart, setShowSizeChart] = useState(false);
 
     const product = products.find(p => p._id === id);
 
@@ -140,7 +141,12 @@ export default function ProductDetails() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
                                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Select Size</p>
-                                        <button className="text-[10px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-900">Size Guide</button>
+                                        <button 
+                                            onClick={() => setShowSizeChart(true)}
+                                            className="text-[10px] font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-0.5 hover:text-slate-500 hover:border-slate-500 transition-all"
+                                        >
+                                            View Size Guide
+                                        </button>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {sizes.map(size => (
@@ -172,6 +178,10 @@ export default function ProductDetails() {
                                                 <span className="text-xs font-bold uppercase tracking-tight">{color}</span>
                                             </button>
                                         ))}
+                                    </div>
+                                    <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Selected Color:</span>
+                                        <span className="text-xs font-black uppercase text-slate-900 bg-white px-3 py-1 rounded-lg shadow-sm border border-slate-100">{selectedColor}</span>
                                     </div>
                                 </div>
 
@@ -257,6 +267,74 @@ export default function ProductDetails() {
                     </motion.div>
                 </div>
             </div>
+
+            {/* Size Chart Modal */}
+            <AnimatePresence>
+                {showSizeChart && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowSizeChart(false)}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100"
+                        >
+                            <div className="bg-slate-900 p-8 text-white relative">
+                                <h3 className="text-3xl font-serif italic font-bold">Shirt Size Guide</h3>
+                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Tees • Long Sleeves • Raglan</p>
+                                <button 
+                                    onClick={() => setShowSizeChart(false)}
+                                    className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all text-white font-bold"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            
+                            <div className="p-8 overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b-2 border-slate-900">
+                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Size</th>
+                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Chest (in)</th>
+                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Length (in)</th>
+                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Sleeve (in)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {[
+                                            { s: 'Small (S)', c: '36', l: '26.5', v: '22.5' },
+                                            { s: 'Medium (M)', c: '40', l: '27', v: '24' },
+                                            { s: 'Large (L)', c: '43', l: '28.5', v: '25' },
+                                            { s: 'X-Large (XL)', c: '47', l: '30', v: '26' },
+                                            { s: 'XX-Large (XXL)', c: '51', l: '31', v: '27' }
+                                        ].map((row, i) => (
+                                            <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                                <td className="py-4 font-black text-slate-900">{row.s}</td>
+                                                <td className="py-4 text-center font-bold text-slate-600 bg-slate-50/30">{row.c}</td>
+                                                <td className="py-4 text-center font-medium text-slate-500">{row.l}</td>
+                                                <td className="py-4 text-center font-medium text-slate-500 bg-slate-50/30">{row.v}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                
+                                <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pro Tip:</p>
+                                    <p className="text-xs text-slate-600 italic leading-relaxed">
+                                        For an oversized/baggy fit, we recommend ordering one size up from your standard measurement.
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

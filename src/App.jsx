@@ -12,7 +12,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const ProtectedAdmin = ({ children }) => {
   const { user, isAdmin, loading } = useAuth();
@@ -52,13 +52,43 @@ const Toast = () => {
 };
 
 function App() {
+  const [siteSettings, setSiteSettings] = useState(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('https://alterra-node.onrender.com/api/settings');
+        const data = await response.json();
+        if (data.status === 'success') {
+          setSiteSettings(data.data);
+          
+          // DYNAMIC FAVICON UPDATE
+          if (data.data.logo_url) {
+            const favicon = document.querySelector('link[rel="icon"]');
+            if (favicon) {
+               favicon.href = data.data.logo_url;
+            } else {
+               const newFavicon = document.createElement('link');
+               newFavicon.rel = 'icon';
+               newFavicon.href = data.data.logo_url;
+               document.head.appendChild(newFavicon);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Settings fetch failed:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   return (
     <AuthProvider>
       <ProductProvider>
         <Router>
           <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
             <Toast />
-            <Header />
+            <Header logoUrl={siteSettings?.logo_url} />
 
             <main className="flex-grow">
               <Routes>

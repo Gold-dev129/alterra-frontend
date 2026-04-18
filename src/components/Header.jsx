@@ -5,7 +5,7 @@ import { useProducts } from '../context/ProductContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, User, LogOut, Menu, X, Settings, Search } from 'lucide-react';
 
-export default function Header() {
+export default function Header({ logoUrl }) {
   const { user, logout, isAdmin } = useAuth();
   const { cart, setIsCartOpen, searchQuery, setSearchQuery } = useProducts();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,9 +44,13 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group shrink-0">
-            <span className={`text-2xl sm:text-3xl font-serif font-bold tracking-tighter transition-colors ${headerTextClass}`}>
-              ALTERRA
-            </span>
+            {logoUrl ? (
+              <img src={logoUrl} alt="ALTERRA" className="h-8 sm:h-10 w-auto object-contain" />
+            ) : (
+              <span className={`text-2xl sm:text-3xl font-serif font-bold tracking-tighter transition-colors ${headerTextClass}`}>
+                ALTERRA
+              </span>
+            )}
           </Link>
 
           {/* Desktop Navigation */}

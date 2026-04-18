@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, ArrowLeft, Hexagon, Loader2, Minus, Plus, Share2, Heart, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Hexagon, Loader2, Minus, Plus, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
 
 export default function ProductDetails() {
     const { id } = useParams();
@@ -88,14 +88,6 @@ export default function ProductDetails() {
                                 />
                             </AnimatePresence>
 
-                            <div className="absolute top-6 right-6 flex flex-col gap-3">
-                                <button className="p-3 bg-white/80 backdrop-blur-md rounded-full shadow-lg text-slate-900 hover:bg-slate-900 hover:text-white transition-all">
-                                    <Heart className="w-5 h-5" />
-                                </button>
-                                <button className="p-3 bg-white/80 backdrop-blur-md rounded-full shadow-lg text-slate-900 hover:bg-slate-900 hover:text-white transition-all">
-                                    <Share2 className="w-5 h-5" />
-                                </button>
-                            </div>
 
                             {images.length > 1 && (
                                 <div className="absolute inset-x-0 bottom-6 flex justify-center gap-2">

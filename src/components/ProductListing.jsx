@@ -35,7 +35,7 @@ export default function ProductListing() {
             transition={{ duration: 0.8 }}
             className="text-4xl sm:text-6xl font-serif text-slate-900 leading-tight uppercase tracking-[0.2em]"
           >
-            ALTERRA&apos;S COLLECTION
+            ALTERRA HEAVENLY COLLECTION
           </motion.h2>
           <div className="w-24 h-px bg-slate-200 mt-8" />
         </div>

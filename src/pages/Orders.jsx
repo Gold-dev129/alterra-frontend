@@ -158,9 +158,9 @@ export default function Orders() {
 
         <div className="mt-20 p-8 bg-slate-900 rounded-[3rem] text-center text-white relative overflow-hidden">
              <div className="relative z-10">
-                <h3 className="text-2xl font-serif italic mb-4">Need help with an order?</h3>
-                <p className="text-slate-400 text-sm mb-8 max-w-md mx-auto">Our studio team is available 24/7. Reach out via WhatsApp or email for immediate assistance.</p>
-                <a href="mailto:alterraszn@gmail.com" className="bg-white text-slate-900 px-10 py-4 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all inline-block">Contact Studio</a>
+                <h3 className="text-2xl font-serif italic mb-4">Need help with ordering?</h3>
+                <p className="text-slate-400 text-sm mb-8 max-w-md mx-auto">Our studio team is available 24/7. Reach out directly via Snapchat for immediate assistance.</p>
+                <a href="https://snapchat.com/t/Gh7wXpDR" target="_blank" rel="noopener noreferrer" className="bg-white text-slate-900 px-10 py-4 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all inline-block">Contact Us</a>
              </div>
              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         </div>

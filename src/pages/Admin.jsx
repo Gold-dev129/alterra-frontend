@@ -26,6 +26,13 @@ export default function Admin() {
         isNewIn: false,
         colors: ''
     });
+    const [sizeChart, setSizeChart] = useState([
+        { label: 'S', chest: '', waist: '', length: '', sleeve: '' },
+        { label: 'M', chest: '', waist: '', length: '', sleeve: '' },
+        { label: 'L', chest: '', waist: '', length: '', sleeve: '' },
+        { label: 'XL', chest: '', waist: '', length: '', sleeve: '' },
+        { label: 'XXL', chest: '', waist: '', length: '', sleeve: '' }
+    ]);
     const [images, setImages] = useState([]);
     const [dashboardHeaderImg, setDashboardHeaderImg] = useState('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop');
 
@@ -106,6 +113,17 @@ export default function Admin() {
             isNewIn: product.isNewIn || false,
             colors: (product.colors || []).join(', ')
         });
+        if (product.sizeChart && product.sizeChart.length > 0) {
+            setSizeChart(product.sizeChart);
+        } else {
+            setSizeChart([
+                { label: 'S', chest: '', waist: '', length: '', sleeve: '' },
+                { label: 'M', chest: '', waist: '', length: '', sleeve: '' },
+                { label: 'L', chest: '', waist: '', length: '', sleeve: '' },
+                { label: 'XL', chest: '', waist: '', length: '', sleeve: '' },
+                { label: 'XXL', chest: '', waist: '', length: '', sleeve: '' }
+            ]);
+        }
         setImages([]);
         setActiveTab('products');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -114,6 +132,13 @@ export default function Admin() {
     const handleCancelEdit = () => {
         setEditId(null);
         setFormData({ name: '', price: '', description: '', stock: '10', isNewIn: false, colors: '' });
+        setSizeChart([
+            { label: 'S', chest: '', waist: '', length: '', sleeve: '' },
+            { label: 'M', chest: '', waist: '', length: '', sleeve: '' },
+            { label: 'L', chest: '', waist: '', length: '', sleeve: '' },
+            { label: 'XL', chest: '', waist: '', length: '', sleeve: '' },
+            { label: 'XXL', chest: '', waist: '', length: '', sleeve: '' }
+        ]);
         setImages([]);
     };
 
@@ -129,6 +154,7 @@ export default function Admin() {
         data.append('stock', formData.stock);
         data.append('isNewIn', formData.isNewIn);
         data.append('colors', formData.colors);
+        data.append('sizeChart', JSON.stringify(sizeChart));
 
         for (let i = 0; i < images.length; i++) {
             data.append('images', images[i]);
@@ -307,8 +333,116 @@ export default function Admin() {
 
                                         <div className="relative">
                                             <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                                            <input name="colors" value={formData.colors} onChange={handleChange} placeholder="Colors (e.g. Black, White, Brown)" className="input-admin pl-12" />
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2 ml-4">Separate with commas for multiple choices</p>
+                                            <input name="colors" value={formData.colors} onChange={handleChange} placeholder="Colors (e.g. Black, White, Charcoal Grey)" className="input-admin pl-12" />
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2 ml-4">Separate with commas (e.g. Black, White, Black and Grey)</p>
+                                        </div>
+
+                                        <div className="space-y-4 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Type className="w-4 h-4 text-slate-400" />
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Custom Size Chart (Inches)</span>
+                                                </div>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setSizeChart([...sizeChart, { label: '', chest: '', waist: '', length: '', sleeve: '' }])}
+                                                    className="text-[9px] font-black uppercase tracking-widest text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-all"
+                                                >
+                                                    + Add Row
+                                                </button>
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-left border-collapse min-w-[500px]">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Size Label</th>
+                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Chest</th>
+                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Waist</th>
+                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Length</th>
+                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Sleeve</th>
+                                                            <th className="pb-3"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="space-y-2">
+                                                        {sizeChart.map((row, idx) => (
+                                                            <tr key={idx} className="group">
+                                                                <td className="py-1 pr-2">
+                                                                    <input 
+                                                                        value={row.label} 
+                                                                        placeholder="e.g. M"
+                                                                        onChange={(e) => {
+                                                                            const newChart = [...sizeChart];
+                                                                            newChart[idx].label = e.target.value;
+                                                                            setSizeChart(newChart);
+                                                                        }}
+                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] font-bold focus:border-slate-900 outline-none transition-all"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-1 pr-2">
+                                                                    <input 
+                                                                        value={row.chest} 
+                                                                        placeholder='34"'
+                                                                        onChange={(e) => {
+                                                                            const newChart = [...sizeChart];
+                                                                            newChart[idx].chest = e.target.value;
+                                                                            setSizeChart(newChart);
+                                                                        }}
+                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] focus:border-slate-900 outline-none transition-all"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-1 pr-2">
+                                                                    <input 
+                                                                        value={row.waist} 
+                                                                        placeholder='30"'
+                                                                        onChange={(e) => {
+                                                                            const newChart = [...sizeChart];
+                                                                            newChart[idx].waist = e.target.value;
+                                                                            setSizeChart(newChart);
+                                                                        }}
+                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] focus:border-slate-900 outline-none transition-all"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-1 pr-2">
+                                                                    <input 
+                                                                        value={row.length} 
+                                                                        placeholder='28"'
+                                                                        onChange={(e) => {
+                                                                            const newChart = [...sizeChart];
+                                                                            newChart[idx].length = e.target.value;
+                                                                            setSizeChart(newChart);
+                                                                        }}
+                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] focus:border-slate-900 outline-none transition-all"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-1 pr-2">
+                                                                    <input 
+                                                                        value={row.sleeve} 
+                                                                        placeholder='24"'
+                                                                        onChange={(e) => {
+                                                                            const newChart = [...sizeChart];
+                                                                            newChart[idx].sleeve = e.target.value;
+                                                                            setSizeChart(newChart);
+                                                                        }}
+                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] focus:border-slate-900 outline-none transition-all"
+                                                                    />
+                                                                </td>
+                                                                <td className="py-1">
+                                                                    <button 
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newChart = sizeChart.filter((_, i) => i !== idx);
+                                                                            setSizeChart(newChart);
+                                                                        }}
+                                                                        className="p-2 text-slate-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                                                    >
+                                                                        <Trash2 className="w-3 h-3" />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
 
                                         <div

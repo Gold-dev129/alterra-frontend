@@ -289,28 +289,30 @@ export default function ProductDetails() {
                             </div>
                             
                             <div className="p-8 overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
+                                <table className="w-full text-left border-collapse min-w-[500px]">
                                     <thead>
                                         <tr className="border-b-2 border-slate-900">
                                             <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Size</th>
                                             <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Chest (in)</th>
+                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Waist (in)</th>
                                             <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Length (in)</th>
                                             <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Sleeve (in)</th>
                                         </tr>
                                     </thead>
                                     <tbody className="text-sm">
-                                        {[
-                                            { s: 'Small (S)', c: '36', l: '26.5', v: '22.5' },
-                                            { s: 'Medium (M)', c: '40', l: '27', v: '24' },
-                                            { s: 'Large (L)', c: '43', l: '28.5', v: '25' },
-                                            { s: 'X-Large (XL)', c: '47', l: '30', v: '26' },
-                                            { s: 'XX-Large (XXL)', c: '51', l: '31', v: '27' }
-                                        ].map((row, i) => (
+                                        {(product.sizeChart && product.sizeChart.length > 0 ? product.sizeChart : [
+                                            { label: 'Small (S)', chest: '36', waist: '30', length: '26.5', sleeve: '22.5' },
+                                            { label: 'Medium (M)', chest: '40', waist: '32', length: '27', sleeve: '24' },
+                                            { label: 'Large (L)', chest: '43', waist: '34', length: '28.5', sleeve: '25' },
+                                            { label: 'X-Large (XL)', chest: '47', waist: '38', length: '30', sleeve: '26' },
+                                            { label: 'XX-Large (XXL)', chest: '51', waist: '42', length: '31', sleeve: '27' }
+                                        ]).map((row, i) => (
                                             <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                                <td className="py-4 font-black text-slate-900">{row.s}</td>
-                                                <td className="py-4 text-center font-bold text-slate-600 bg-slate-50/30">{row.c}</td>
-                                                <td className="py-4 text-center font-medium text-slate-500">{row.l}</td>
-                                                <td className="py-4 text-center font-medium text-slate-500 bg-slate-50/30">{row.v}</td>
+                                                <td className="py-4 font-black text-slate-900 uppercase tracking-tighter">{row.label || row.s}</td>
+                                                <td className="py-4 text-center font-bold text-slate-600 bg-slate-50/30">{row.chest || row.c}</td>
+                                                <td className="py-4 text-center font-medium text-slate-500">{row.waist || '--'}</td>
+                                                <td className="py-4 text-center font-medium text-slate-500 bg-slate-50/30">{row.length || row.l}</td>
+                                                <td className="py-4 text-center font-medium text-slate-500">{row.sleeve || row.v}</td>
                                             </tr>
                                         ))}
                                     </tbody>

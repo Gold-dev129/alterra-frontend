@@ -261,7 +261,7 @@ export default function Admin() {
                             className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${activeTab === 'orders' ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
                         >
                             <ShoppingBag className="w-5 h-5" />
-                            <span className="font-bold text-xs uppercase tracking-widest">Custom Orders</span>
+                            <span className="font-bold text-xs uppercase tracking-widest">Customer Orders</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('branding')}
@@ -551,7 +551,7 @@ export default function Admin() {
                             >
                                 <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col sm:flex-row justify-between items-center gap-6">
                                     <div>
-                                        <h1 className="text-3xl font-serif font-bold italic tracking-tight uppercase underline decoration-white/20 underline-offset-8">Custom Orders</h1>
+                                        <h1 className="text-3xl font-serif font-bold italic tracking-tight uppercase underline decoration-white/20 underline-offset-8">Customer Orders</h1>
                                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 opacity-60">Management Panel</p>
                                     </div>
                                     <button 
@@ -568,7 +568,7 @@ export default function Admin() {
                                     ) : orders.length === 0 ? (
                                         <div className="py-20 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
                                             <ShoppingBag className="w-12 h-12 text-slate-100 mx-auto mb-4" />
-                                            <p className="italic text-slate-400">No custom orders received yet.</p>
+                                            <p className="italic text-slate-400">No orders received yet.</p>
                                         </div>
                                     ) : (
                                         orders.map((order) => (

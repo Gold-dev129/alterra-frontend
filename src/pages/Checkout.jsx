@@ -60,6 +60,7 @@ export default function Checkout() {
         amount: Math.round((total || 0) * 100) || 100,
         publicKey: 'pk_live_de2d005e95d26e65feb09a0d9865bd43c6b6c5f3',
         currency: 'NGN',
+        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
         text: "Complete Purchase",
         onSuccess: async (reference) => {
             console.log('--- !!! RELIABILITY VERSION 8.1 SUCCESS !!! ---', reference);
@@ -69,10 +70,10 @@ export default function Checkout() {
                 items: (cart || []).map(item => ({
                     product: item?._id,
                     name: item?.name,
-                    price: item?.price,
-                    quantity: item?.quantity,
-                    size: item?.selectedSize,
-                    color: item?.selectedColor,
+                    price: item?.price || 0,
+                    quantity: item?.quantity || 1,
+                    size: item?.selectedSize || 'M',
+                    color: item?.selectedColor || 'Black',
                     image: item?.images?.[0] || item?.image || '/placeholder.png',
                     customNote: item?.customNote || ''
                 })),
@@ -90,8 +91,7 @@ export default function Checkout() {
                     try { clearCart(); } catch (e) { console.error(e); }
                     window.location.assign('/');
                 } else {
-                    window.alert("Order saved, but there was a minor issue clearing your cart. Your order is secure!");
-                    window.location.assign('/');
+                    window.alert("Payment was successful, but there was an error saving your order: " + (result.message || 'Unknown server error') + "\n\nPlease contact support with your payment reference: " + orderData.paymentReference);
                 }
             } catch (err) {
                 console.error("Order Creation Error:", err);

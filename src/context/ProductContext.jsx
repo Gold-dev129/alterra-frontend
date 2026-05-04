@@ -11,9 +11,14 @@ export const useProducts = () => {
 };
 
 export const ProductProvider = ({ children }) => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => {
+    const cached = localStorage.getItem('alterra_products_cache');
+    return cached ? JSON.parse(cached) : [];
+  });
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    return !localStorage.getItem('alterra_products_cache');
+  });
   const [error, setError] = useState(null);
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,11 +54,16 @@ export const ProductProvider = ({ children }) => {
         const data = await response.json();
         if (response.ok && data.data && Array.isArray(data.data.products)) {
           setProducts(data.data.products);
+          localStorage.setItem('alterra_products_cache', JSON.stringify(data.data.products));
         } else {
-          setError(data.message || 'Failed to fetch products');
+          if (!localStorage.getItem('alterra_products_cache')) {
+            setError(data.message || 'Failed to fetch products');
+          }
         }
       } catch (err) {
-        setError('Server error while loading products');
+        if (!localStorage.getItem('alterra_products_cache')) {
+          setError('Server error while loading products');
+        }
       } finally {
         setLoading(false);
       }
@@ -85,7 +95,11 @@ export const ProductProvider = ({ children }) => {
       });
       const data = await response.json();
       if (response.ok) {
-        setProducts(prev => [...prev, data.data.product]);
+        setProducts(prev => {
+          const newProducts = [...prev, data.data.product];
+          localStorage.setItem('alterra_products_cache', JSON.stringify(newProducts));
+          return newProducts;
+        });
         return { success: true };
       }
       return { success: false, message: data.message };
@@ -103,7 +117,11 @@ export const ProductProvider = ({ children }) => {
         }
       });
       if (response.ok) {
-        setProducts(prev => prev.filter(p => p._id !== productId));
+        setProducts(prev => {
+          const newProducts = prev.filter(p => p._id !== productId);
+          localStorage.setItem('alterra_products_cache', JSON.stringify(newProducts));
+          return newProducts;
+        });
         return { success: true };
       }
       return { success: false };
@@ -123,7 +141,11 @@ export const ProductProvider = ({ children }) => {
       });
       const data = await response.json();
       if (response.ok) {
-        setProducts(prev => prev.map(p => p._id === productId ? data.data.product : p));
+        setProducts(prev => {
+          const newProducts = prev.map(p => p._id === productId ? data.data.product : p);
+          localStorage.setItem('alterra_products_cache', JSON.stringify(newProducts));
+          return newProducts;
+        });
         return { success: true };
       }
       return { success: false, message: data.message };

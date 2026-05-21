@@ -12,6 +12,7 @@ export default function CartItem({ item }) {
 
   const availableColors = (item.colors && item.colors.length > 0) ? item.colors : ['Black', 'White'];
   const availableSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+  const availableWaists = item.waistOptions || [];
 
   return (
     <motion.div
@@ -35,7 +36,7 @@ export default function CartItem({ item }) {
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight line-clamp-1 pr-4">{item.name}</h4>
           </div>
           <button
-            onClick={() => removeFromCart(item._id, { size: item.selectedSize, color: item.selectedColor, customNote: item.customNote })}
+            onClick={() => removeFromCart(item._id, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote })}
             className="text-slate-300 hover:text-red-500 transition-colors p-1"
           >
             <X className="w-4 h-4" />
@@ -48,7 +49,7 @@ export default function CartItem({ item }) {
             <span className="text-[8px] font-bold text-slate-400 uppercase px-1">Size</span>
             <select
               value={item.selectedSize}
-              onChange={(e) => updateCartItemAttributes(item._id, { size: item.selectedSize, color: item.selectedColor, customNote: item.customNote }, { size: e.target.value, color: item.selectedColor })}
+              onChange={(e) => updateCartItemAttributes(item._id, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote }, { size: e.target.value, color: item.selectedColor, waist: item.selectedWaist })}
               className="text-[10px] font-bold bg-transparent outline-none cursor-pointer pr-1"
             >
               {availableSizes.map(s => <option key={s} value={s}>{s}</option>)}
@@ -60,18 +61,32 @@ export default function CartItem({ item }) {
             <span className="text-[8px] font-bold text-slate-400 uppercase px-1">Color</span>
             <select
               value={item.selectedColor}
-              onChange={(e) => updateCartItemAttributes(item._id, { size: item.selectedSize, color: item.selectedColor, customNote: item.customNote }, { size: item.selectedSize, color: e.target.value })}
+              onChange={(e) => updateCartItemAttributes(item._id, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote }, { size: item.selectedSize, color: e.target.value, waist: item.selectedWaist })}
               className="text-[10px] font-bold bg-transparent outline-none cursor-pointer pr-1"
             >
               {availableColors.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+
+          {/* Waist Selector */}
+          {availableWaists.length > 0 && (
+            <div className="flex items-center gap-1 bg-white border border-slate-100 rounded-lg p-1">
+              <span className="text-[8px] font-bold text-slate-400 uppercase px-1">Waist</span>
+              <select
+                value={item.selectedWaist}
+                onChange={(e) => updateCartItemAttributes(item._id, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote }, { size: item.selectedSize, color: item.selectedColor, waist: e.target.value })}
+                className="text-[10px] font-bold bg-transparent outline-none cursor-pointer pr-1"
+              >
+                {availableWaists.map(w => <option key={w} value={w}>{w}</option>)}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-end mt-3">
           <div className="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden">
             <button
-              onClick={() => updateQuantity(item._id, item.quantity - 1, { size: item.selectedSize, color: item.selectedColor, customNote: item.customNote })}
+              onClick={() => updateQuantity(item._id, item.quantity - 1, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote })}
               className="p-1 hover:bg-slate-50 text-slate-400"
               disabled={item.quantity <= 1}
             >
@@ -79,7 +94,7 @@ export default function CartItem({ item }) {
             </button>
             <span className="px-2 text-[10px] font-bold text-slate-900 border-x border-slate-100">{item.quantity}</span>
             <button
-              onClick={() => updateQuantity(item._id, item.quantity + 1, { size: item.selectedSize, color: item.selectedColor, customNote: item.customNote })}
+              onClick={() => updateQuantity(item._id, item.quantity + 1, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote })}
               className="p-1 hover:bg-slate-50 text-slate-400"
             >
               <Plus className="w-3 h-3" />

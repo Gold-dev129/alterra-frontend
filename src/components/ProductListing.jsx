@@ -40,7 +40,7 @@ export default function ProductListing() {
           <div className="w-24 h-px bg-slate-200 mt-8" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-10 gap-y-20">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 sm:gap-x-10 gap-y-10 sm:gap-y-20">
           {sortedProducts.map((product, index) => (
             <ProductCard key={product._id} product={product} index={index} />
           ))}

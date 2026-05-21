@@ -24,7 +24,8 @@ export default function Admin() {
         description: '',
         stock: '10',
         isNewIn: false,
-        colors: ''
+        colors: '',
+        waistOptions: []
     });
     const [sizeChart, setSizeChart] = useState([
         { label: 'S', chest: '', waist: '', length: '', sleeve: '' },
@@ -33,7 +34,26 @@ export default function Admin() {
         { label: 'XL', chest: '', waist: '', length: '', sleeve: '' },
         { label: 'XXL', chest: '', waist: '', length: '', sleeve: '' }
     ]);
+    const [sizeChartColumns, setSizeChartColumns] = useState(['label', 'chest', 'waist', 'length', 'sleeve']);
     const [images, setImages] = useState([]);
+    
+    const getHeaderLabel = (key) => {
+        if (key === 'label') return 'Size Label';
+        return key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+    };
+
+    const handleAddColumn = () => {
+        const colName = window.prompt('Enter new column name (e.g. Shoulder, Hip):');
+        if (!colName) return;
+        const cleanKey = colName.trim().toLowerCase().replace(/\s+/g, '_');
+        if (!cleanKey) return;
+        if (sizeChartColumns.includes(cleanKey)) {
+            alert('Column already exists!');
+            return;
+        }
+        setSizeChartColumns([...sizeChartColumns, cleanKey]);
+        setSizeChart(sizeChart.map(row => ({ ...row, [cleanKey]: '' })));
+    };
     const [dashboardHeaderImg, setDashboardHeaderImg] = useState('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop');
 
     useEffect(() => {
@@ -43,12 +63,34 @@ export default function Admin() {
             });
         }
 
-        const socket = io('https://alterra-node.onrender.com');
+        // Request browser notification permission
+        if ('Notification' in window && Notification.permission !== 'granted') {
+            Notification.requestPermission();
+        }
+
+        const socket = io('https://alterra-node.onrender.com', {
+            transports: ['websocket', 'polling']
+        });
 
         socket.on('newOrder', (data) => {
             console.log('New order received:', data);
             setNewOrderAlert(data);
             fetchOrders(token); 
+            
+            // Play a notification sound
+            try {
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            } catch (e) {}
+
+            // Trigger Browser Push Notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('New Custom Order Received! 🎉', {
+                    body: `You just received a new order from ${data?.customerName || 'a customer'}. Open dashboard to view details.`,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/3500/3500833.png'
+                });
+            }
+
             setTimeout(() => setNewOrderAlert(null), 10000);
         });
 
@@ -111,10 +153,20 @@ export default function Admin() {
             description: product.description || '',
             stock: product.stock || '10',
             isNewIn: product.isNewIn || false,
-            colors: (product.colors || []).join(', ')
+            colors: (product.colors || []).join(', '),
+            waistOptions: product.waistOptions || []
         });
         if (product.sizeChart && product.sizeChart.length > 0) {
             setSizeChart(product.sizeChart);
+            const keys = Array.from(new Set(
+                product.sizeChart.flatMap(row => Object.keys(row))
+            )).filter(k => k !== '_id' && k !== 'id');
+            const sortedKeys = [];
+            if (keys.includes('label')) sortedKeys.push('label');
+            keys.forEach(k => {
+                if (k !== 'label') sortedKeys.push(k);
+            });
+            setSizeChartColumns(sortedKeys.length > 0 ? sortedKeys : ['label', 'chest', 'waist', 'length', 'sleeve']);
         } else {
             setSizeChart([
                 { label: 'S', chest: '', waist: '', length: '', sleeve: '' },
@@ -123,6 +175,7 @@ export default function Admin() {
                 { label: 'XL', chest: '', waist: '', length: '', sleeve: '' },
                 { label: 'XXL', chest: '', waist: '', length: '', sleeve: '' }
             ]);
+            setSizeChartColumns(['label', 'chest', 'waist', 'length', 'sleeve']);
         }
         setImages([]);
         setActiveTab('products');
@@ -131,7 +184,7 @@ export default function Admin() {
 
     const handleCancelEdit = () => {
         setEditId(null);
-        setFormData({ name: '', price: '', description: '', stock: '10', isNewIn: false, colors: '' });
+        setFormData({ name: '', price: '', description: '', stock: '10', isNewIn: false, colors: '', waistOptions: [] });
         setSizeChart([
             { label: 'S', chest: '', waist: '', length: '', sleeve: '' },
             { label: 'M', chest: '', waist: '', length: '', sleeve: '' },
@@ -139,6 +192,7 @@ export default function Admin() {
             { label: 'XL', chest: '', waist: '', length: '', sleeve: '' },
             { label: 'XXL', chest: '', waist: '', length: '', sleeve: '' }
         ]);
+        setSizeChartColumns(['label', 'chest', 'waist', 'length', 'sleeve']);
         setImages([]);
     };
 
@@ -154,6 +208,7 @@ export default function Admin() {
         data.append('stock', formData.stock);
         data.append('isNewIn', formData.isNewIn);
         data.append('colors', formData.colors);
+        data.append('waistOptions', JSON.stringify(formData.waistOptions));
         data.append('sizeChart', JSON.stringify(sizeChart));
 
         for (let i = 0; i < images.length; i++) {
@@ -343,89 +398,82 @@ export default function Admin() {
                                                     <Type className="w-4 h-4 text-slate-400" />
                                                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Custom Size Chart (Inches)</span>
                                                 </div>
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => setSizeChart([...sizeChart, { label: '', chest: '', waist: '', length: '', sleeve: '' }])}
-                                                    className="text-[9px] font-black uppercase tracking-widest text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-all"
-                                                >
-                                                    + Add Row
-                                                </button>
+                                                <div className="flex gap-2">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newRow = {};
+                                                            sizeChartColumns.forEach(col => {
+                                                                newRow[col] = '';
+                                                            });
+                                                            setSizeChart([...sizeChart, newRow]);
+                                                        }}
+                                                        className="text-[9px] font-black uppercase tracking-widest text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-all"
+                                                    >
+                                                        + Add Row
+                                                    </button>
+                                                    <button 
+                                                        type="button"
+                                                        onClick={handleAddColumn}
+                                                        className="text-[9px] font-black uppercase tracking-widest text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-all"
+                                                    >
+                                                        + Add Column
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-left border-collapse min-w-[500px]">
                                                     <thead>
                                                         <tr>
-                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Size Label</th>
-                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Chest</th>
-                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Waist</th>
-                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Length</th>
-                                                            <th className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400">Sleeve</th>
+                                                            {sizeChartColumns.map((col) => (
+                                                                <th key={col} className="pb-3 text-[8px] font-black uppercase tracking-widest text-slate-400 relative">
+                                                                    <div className="flex items-center gap-1">
+                                                                        {getHeaderLabel(col)}
+                                                                        {col !== 'label' && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    if (window.confirm(`Delete column "${getHeaderLabel(col)}"?`)) {
+                                                                                        setSizeChartColumns(sizeChartColumns.filter(c => c !== col));
+                                                                                        setSizeChart(sizeChart.map(row => {
+                                                                                            const newRow = { ...row };
+                                                                                            delete newRow[col];
+                                                                                            return newRow;
+                                                                                        }));
+                                                                                    }
+                                                                                }}
+                                                                                className="text-red-500 hover:text-red-700 transition-colors ml-1 font-bold text-[9px]"
+                                                                                title="Delete Column"
+                                                                            >
+                                                                                ✕
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                </th>
+                                                            ))}
                                                             <th className="pb-3"></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="space-y-2">
                                                         {sizeChart.map((row, idx) => (
                                                             <tr key={idx} className="group">
-                                                                <td className="py-1 pr-2">
-                                                                    <input 
-                                                                        value={row.label} 
-                                                                        placeholder="e.g. M"
-                                                                        onChange={(e) => {
-                                                                            const newChart = [...sizeChart];
-                                                                            newChart[idx].label = e.target.value;
-                                                                            setSizeChart(newChart);
-                                                                        }}
-                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] font-bold focus:border-slate-900 outline-none transition-all"
-                                                                    />
-                                                                </td>
-                                                                <td className="py-1 pr-2">
-                                                                    <input 
-                                                                        value={row.chest} 
-                                                                        placeholder='34"'
-                                                                        onChange={(e) => {
-                                                                            const newChart = [...sizeChart];
-                                                                            newChart[idx].chest = e.target.value;
-                                                                            setSizeChart(newChart);
-                                                                        }}
-                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] focus:border-slate-900 outline-none transition-all"
-                                                                    />
-                                                                </td>
-                                                                <td className="py-1 pr-2">
-                                                                    <input 
-                                                                        value={row.waist} 
-                                                                        placeholder='30"'
-                                                                        onChange={(e) => {
-                                                                            const newChart = [...sizeChart];
-                                                                            newChart[idx].waist = e.target.value;
-                                                                            setSizeChart(newChart);
-                                                                        }}
-                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] focus:border-slate-900 outline-none transition-all"
-                                                                    />
-                                                                </td>
-                                                                <td className="py-1 pr-2">
-                                                                    <input 
-                                                                        value={row.length} 
-                                                                        placeholder='28"'
-                                                                        onChange={(e) => {
-                                                                            const newChart = [...sizeChart];
-                                                                            newChart[idx].length = e.target.value;
-                                                                            setSizeChart(newChart);
-                                                                        }}
-                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] focus:border-slate-900 outline-none transition-all"
-                                                                    />
-                                                                </td>
-                                                                <td className="py-1 pr-2">
-                                                                    <input 
-                                                                        value={row.sleeve} 
-                                                                        placeholder='24"'
-                                                                        onChange={(e) => {
-                                                                            const newChart = [...sizeChart];
-                                                                            newChart[idx].sleeve = e.target.value;
-                                                                            setSizeChart(newChart);
-                                                                        }}
-                                                                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] focus:border-slate-900 outline-none transition-all"
-                                                                    />
-                                                                </td>
+                                                                {sizeChartColumns.map((col) => (
+                                                                    <td key={col} className="py-1 pr-2">
+                                                                        <input 
+                                                                            value={row[col] || ''} 
+                                                                            placeholder={col === 'label' ? 'e.g. M' : 'e.g. 30"'}
+                                                                            onChange={(e) => {
+                                                                                const newChart = [...sizeChart];
+                                                                                newChart[idx] = {
+                                                                                    ...newChart[idx],
+                                                                                    [col]: e.target.value
+                                                                                };
+                                                                                setSizeChart(newChart);
+                                                                            }}
+                                                                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[10px] font-bold focus:border-slate-900 outline-none transition-all"
+                                                                        />
+                                                                    </td>
+                                                                ))}
                                                                 <td className="py-1">
                                                                     <button 
                                                                         type="button"
@@ -453,6 +501,41 @@ export default function Admin() {
                                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.isNewIn ? 'left-5' : 'left-1'}`} />
                                             </div>
                                             <span className="text-sm font-bold text-slate-900">Show "New In" Badge</span>
+                                        </div>
+
+                                        <div className="space-y-3 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Available Waist Options</p>
+                                            <div className="flex gap-4">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.waistOptions.includes('Single')}
+                                                        onChange={(e) => {
+                                                            const newOptions = e.target.checked
+                                                                ? [...formData.waistOptions, 'Single']
+                                                                : formData.waistOptions.filter(o => o !== 'Single');
+                                                            setFormData({ ...formData, waistOptions: newOptions });
+                                                        }}
+                                                        className="w-4 h-4 rounded text-slate-900 border-slate-300 focus:ring-slate-900"
+                                                    />
+                                                    <span className="text-sm font-bold text-slate-700">Single Waist</span>
+                                                </label>
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.waistOptions.includes('Double')}
+                                                        onChange={(e) => {
+                                                            const newOptions = e.target.checked
+                                                                ? [...formData.waistOptions, 'Double']
+                                                                : formData.waistOptions.filter(o => o !== 'Double');
+                                                            setFormData({ ...formData, waistOptions: newOptions });
+                                                        }}
+                                                        className="w-4 h-4 rounded text-slate-900 border-slate-300 focus:ring-slate-900"
+                                                    />
+                                                    <span className="text-sm font-bold text-slate-700">Double Waist</span>
+                                                </label>
+                                            </div>
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">Check to enable customers to select waist types.</p>
                                         </div>
 
                                         <div className="relative group">

@@ -74,6 +74,7 @@ export default function Checkout() {
                     quantity: item?.quantity || 1,
                     size: item?.selectedSize || 'M',
                     color: item?.selectedColor || 'Black',
+                    waist: item?.selectedWaist || '',
                     image: item?.images?.[0] || item?.image || '/placeholder.png',
                     customNote: item?.customNote || ''
                 })),
@@ -274,13 +275,14 @@ export default function Checkout() {
                                         <div className="flex-grow flex flex-col justify-between py-1">
                                             <div className="flex justify-between items-start">
                                                 <h4 className="text-[10px] font-bold text-slate-900 uppercase tracking-tight line-clamp-2">{item?.name || 'Item'}</h4>
-                                                <button onClick={() => item?._id && removeFromCart(item._id, { size: item.selectedSize, color: item.selectedColor, customNote: item.customNote })} className="text-slate-300 hover:text-red-500 transition-colors">
+                                                <button onClick={() => item?._id && removeFromCart(item._id, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote })} className="text-slate-300 hover:text-red-500 transition-colors">
                                                     <X className="w-4 h-4" />
                                                 </button>
                                             </div>
                                             <div className="flex gap-2">
                                                 <span className="text-[8px] font-bold bg-white border px-1.5 py-0.5 rounded text-slate-400 uppercase">{item?.selectedSize || 'N/A'}</span>
                                                 <span className="text-[8px] font-bold bg-white border px-1.5 py-0.5 rounded text-slate-400 uppercase">{item?.selectedColor || 'N/A'}</span>
+                                                {item?.selectedWaist && <span className="text-[8px] font-bold bg-white border px-1.5 py-0.5 rounded text-slate-400 uppercase">{item.selectedWaist} Waist</span>}
                                             </div>
                                             <div className="flex justify-between items-end">
                                                 <span className="text-[10px] font-bold text-slate-400">Qty: {item?.quantity || 1}</span>

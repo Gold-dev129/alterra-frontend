@@ -163,11 +163,12 @@ export const ProductProvider = ({ children }) => {
 
   const addToCart = (product, attributes = {}) => {
     setCart((prev) => {
-      const { size = 'M', color = 'Black', customNote = '' } = attributes;
+      const { size = 'M', color = 'Black', waist = '', customNote = '' } = attributes;
       const existing = prev.find((item) =>
         item._id === product._id &&
         item.selectedSize === size &&
         item.selectedColor === color &&
+        item.selectedWaist === waist &&
         item.customNote === customNote
       );
 
@@ -176,6 +177,7 @@ export const ProductProvider = ({ children }) => {
           (item._id === product._id &&
             item.selectedSize === size &&
             item.selectedColor === color &&
+            item.selectedWaist === waist &&
             item.customNote === customNote)
             ? { ...item, quantity: item.quantity + 1 }
             : item
@@ -186,6 +188,7 @@ export const ProductProvider = ({ children }) => {
         quantity: 1,
         selectedSize: size,
         selectedColor: color,
+        selectedWaist: waist,
         customNote: customNote
       }];
     });
@@ -213,10 +216,10 @@ export const ProductProvider = ({ children }) => {
   };
 
   const removeFromCart = (productId, attributes = {}) => {
-    const { size, color, customNote } = attributes;
+    const { size, color, waist, customNote } = attributes;
     setCart((prev) => prev.filter((item) => {
       if (item._id !== productId) return true;
-      return item.selectedSize !== size || item.selectedColor !== color || item.customNote !== customNote;
+      return item.selectedSize !== size || item.selectedColor !== color || item.selectedWaist !== waist || item.customNote !== customNote;
     }));
   };
 
@@ -225,26 +228,28 @@ export const ProductProvider = ({ children }) => {
       removeFromCart(productId, attributes);
       return;
     }
-    const { size, color, customNote } = attributes;
+    const { size, color, waist, customNote } = attributes;
     setCart((prev) =>
       prev.map((item) => (
         item._id === productId &&
         item.selectedSize === size &&
         item.selectedColor === color &&
+        item.selectedWaist === waist &&
         item.customNote === customNote
       ) ? { ...item, quantity } : item)
     );
   };
 
   const updateCartItemAttributes = (productId, originalAttributes, newAttributes) => {
-    const { size: oldSize, color: oldColor, customNote: oldNote } = originalAttributes;
-    const { size: newSize, color: newColor } = newAttributes;
+    const { size: oldSize, color: oldColor, waist: oldWaist, customNote: oldNote } = originalAttributes;
+    const { size: newSize, color: newColor, waist: newWaist } = newAttributes;
 
     setCart((prev) => {
       const itemIndex = prev.findIndex(item =>
         item._id === productId &&
         item.selectedSize === oldSize &&
         item.selectedColor === oldColor &&
+        item.selectedWaist === oldWaist &&
         item.customNote === oldNote
       );
 
@@ -258,6 +263,7 @@ export const ProductProvider = ({ children }) => {
         item._id === productId &&
         item.selectedSize === newSize &&
         item.selectedColor === newColor &&
+        item.selectedWaist === newWaist &&
         item.customNote === oldNote
       );
 
@@ -274,7 +280,7 @@ export const ProductProvider = ({ children }) => {
         // Just update attributes
         return prev.map((item, idx) =>
           idx === itemIndex
-            ? { ...item, selectedSize: newSize, selectedColor: newColor }
+            ? { ...item, selectedSize: newSize, selectedColor: newColor, selectedWaist: newWaist }
             : item
         );
       }

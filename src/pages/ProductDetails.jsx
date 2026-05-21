@@ -12,10 +12,46 @@ export default function ProductDetails() {
     const [selectedImageIdx, setSelectedImageIdx] = useState(0);
     const [selectedSize, setSelectedSize] = useState('M');
     const [selectedColor, setSelectedColor] = useState('Black');
+    const [selectedWaist, setSelectedWaist] = useState('');
     const [customNote, setCustomNote] = useState('');
     const [showSizeChart, setShowSizeChart] = useState(false);
 
     const product = products.find(p => p._id === id);
+
+    const sizeChartData = product?.sizeChart && product.sizeChart.length > 0 ? product.sizeChart : [
+        { label: 'Small (S)', chest: '36', waist: '30', length: '26.5', sleeve: '22.5' },
+        { label: 'Medium (M)', chest: '40', waist: '32', length: '27', sleeve: '24' },
+        { label: 'Large (L)', chest: '43', waist: '34', length: '28.5', sleeve: '25' },
+        { label: 'X-Large (XL)', chest: '47', waist: '38', length: '30', sleeve: '26' },
+        { label: 'XX-Large (XXL)', chest: '51', waist: '42', length: '31', sleeve: '27' }
+    ];
+
+    const columns = Array.from(new Set(
+        sizeChartData.flatMap(row => Object.keys(row))
+    )).filter(k => k !== '_id' && k !== 'id');
+
+    const labelCol = columns.includes('label') ? 'label' : (columns.includes('s') ? 's' : columns[0]);
+
+    const sortedColumns = [];
+    if (labelCol) sortedColumns.push(labelCol);
+    columns.forEach(k => {
+        if (k !== labelCol) sortedColumns.push(k);
+    });
+
+    const getHeaderLabel = (key) => {
+        if (key === 'label' || key === 's') return 'Size';
+        const labelsWithUnit = {
+            chest: 'Chest (in)',
+            waist: 'Waist (in)',
+            length: 'Length (in)',
+            sleeve: 'Sleeve (in)',
+            c: 'Chest (in)',
+            l: 'Length (in)',
+            v: 'Sleeve (in)'
+        };
+        if (labelsWithUnit[key]) return labelsWithUnit[key];
+        return key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+    };
 
     // Default sizes for selection
     const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -26,6 +62,9 @@ export default function ProductDetails() {
     useEffect(() => {
         if (product && availableColors.length > 0) {
             setSelectedColor(availableColors[0]);
+        }
+        if (product && product.waistOptions && product.waistOptions.length > 0) {
+            setSelectedWaist(product.waistOptions[0]);
         }
     }, [product, availableColors]);
 
@@ -177,6 +216,24 @@ export default function ProductDetails() {
                                     </div>
                                 </div>
 
+                                {/* Waist Selection */}
+                                {product.waistOptions && product.waistOptions.length > 0 && (
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Select Waist Style</p>
+                                        <div className="flex flex-wrap gap-3">
+                                            {product.waistOptions.map((waist, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setSelectedWaist(waist)}
+                                                    className={`group flex items-center gap-2 px-6 py-3 rounded-xl border-2 transition-all ${selectedWaist === waist ? 'border-slate-900 bg-slate-900 text-white shadow-lg' : 'border-slate-100 hover:border-slate-200 text-slate-600 bg-white'}`}
+                                                >
+                                                    <span className="text-xs font-bold uppercase tracking-tight">{waist} Waist</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Custom Note */}
                                 <div className="space-y-3">
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Custom Notes (Optional)</p>
@@ -234,6 +291,7 @@ export default function ProductDetails() {
                                             addToCart(product, {
                                                 size: selectedSize,
                                                 color: selectedColor,
+                                                waist: selectedWaist,
                                                 customNote: customNote
                                             });
                                         }
@@ -279,7 +337,6 @@ export default function ProductDetails() {
                         >
                             <div className="bg-slate-900 p-8 text-white relative">
                                 <h3 className="text-3xl font-serif italic font-bold">Shirt Size Guide</h3>
-                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Tees • Long Sleeves • Raglan</p>
                                 <button 
                                     onClick={() => setShowSizeChart(false)}
                                     className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all text-white font-bold"
@@ -292,27 +349,27 @@ export default function ProductDetails() {
                                 <table className="w-full text-left border-collapse min-w-[500px]">
                                     <thead>
                                         <tr className="border-b-2 border-slate-900">
-                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Size</th>
-                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Chest (in)</th>
-                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Waist (in)</th>
-                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Length (in)</th>
-                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Sleeve (in)</th>
+                                            {sortedColumns.map((col) => (
+                                                <th 
+                                                    key={col} 
+                                                    className={`py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 ${col === labelCol ? '' : 'text-center'}`}
+                                                >
+                                                    {getHeaderLabel(col)}
+                                                </th>
+                                            ))}
                                         </tr>
                                     </thead>
                                     <tbody className="text-sm">
-                                        {(product.sizeChart && product.sizeChart.length > 0 ? product.sizeChart : [
-                                            { label: 'Small (S)', chest: '36', waist: '30', length: '26.5', sleeve: '22.5' },
-                                            { label: 'Medium (M)', chest: '40', waist: '32', length: '27', sleeve: '24' },
-                                            { label: 'Large (L)', chest: '43', waist: '34', length: '28.5', sleeve: '25' },
-                                            { label: 'X-Large (XL)', chest: '47', waist: '38', length: '30', sleeve: '26' },
-                                            { label: 'XX-Large (XXL)', chest: '51', waist: '42', length: '31', sleeve: '27' }
-                                        ]).map((row, i) => (
+                                        {sizeChartData.map((row, i) => (
                                             <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                                <td className="py-4 font-black text-slate-900 uppercase tracking-tighter">{row.label || row.s}</td>
-                                                <td className="py-4 text-center font-bold text-slate-600 bg-slate-50/30">{row.chest || row.c}</td>
-                                                <td className="py-4 text-center font-medium text-slate-500">{row.waist || '--'}</td>
-                                                <td className="py-4 text-center font-medium text-slate-500 bg-slate-50/30">{row.length || row.l}</td>
-                                                <td className="py-4 text-center font-medium text-slate-500">{row.sleeve || row.v}</td>
+                                                {sortedColumns.map((col, colIdx) => (
+                                                    <td 
+                                                        key={col} 
+                                                        className={`py-4 ${col === labelCol ? 'font-black text-slate-900 uppercase tracking-tighter' : `text-center ${colIdx % 2 === 1 ? 'font-bold text-slate-600 bg-slate-50/30' : 'font-medium text-slate-500'}`}`}
+                                                    >
+                                                        {row[col] || '--'}
+                                                    </td>
+                                                ))}
                                             </tr>
                                         ))}
                                     </tbody>

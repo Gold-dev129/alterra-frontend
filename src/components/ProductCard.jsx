@@ -32,7 +32,7 @@ export default function ProductCard({ product, index }) {
       className="group cursor-pointer"
       onClick={() => navigate(`/product/${product._id}`)}
     >
-      <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 rounded-2xl mb-6">
+      <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 rounded-2xl mb-3 sm:mb-6">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIdx}
@@ -88,25 +88,21 @@ export default function ProductCard({ product, index }) {
         )}
       </div>
 
-      <div className="space-y-3">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <h3 className="text-slate-900 font-serif text-xl group-hover:text-slate-500 transition-colors uppercase tracking-tight">{product.name}</h3>
-            {product.colors && product.colors.length > 0 && (
-              <div className="flex gap-2">
-                {product.colors.map((color, i) => (
-                  <div
-                    key={i}
-                    className="w-3 h-3 rounded-full border border-slate-200 shadow-sm"
-                    style={{ backgroundColor: color.toLowerCase() }}
-                    title={color}
-                  />
-                ))}
-              </div>
-            )}
+      <div className="space-y-1 mt-3 sm:mt-4">
+        <h3 className="text-slate-900 font-serif text-sm sm:text-xl group-hover:text-slate-500 transition-colors uppercase tracking-tight">{product.name}</h3>
+        {product.colors && product.colors.length > 0 && (
+          <div className="flex gap-1.5 py-0.5">
+            {product.colors.map((color, i) => (
+              <div
+                key={i}
+                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border border-slate-200 shadow-sm"
+                style={{ backgroundColor: color.toLowerCase() }}
+                title={color}
+              />
+            ))}
           </div>
-          <p className="text-slate-900 font-semibold italic text-lg opacity-80">₦{product.price.toFixed(2)}</p>
-        </div>
+        )}
+        <p className="text-slate-900 font-semibold italic text-xs sm:text-lg opacity-80">₦{product.price.toFixed(2)}</p>
       </div>
     </motion.div>
   );

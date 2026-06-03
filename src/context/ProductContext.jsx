@@ -20,6 +20,7 @@ export const ProductProvider = ({ children }) => {
     return !localStorage.getItem('alterra_products_cache');
   });
   const [error, setError] = useState(null);
+  const [settings, setSettings] = useState({ logo_url: '', dashboard_header_url: '' });
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -69,7 +70,20 @@ export const ProductProvider = ({ children }) => {
       }
     };
 
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('https://alterra-node.onrender.com/api/settings');
+        const data = await response.json();
+        if (response.ok && data.data) {
+          setSettings(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to load settings', err);
+      }
+    };
+
     fetchProducts();
+    fetchSettings();
   }, []);
 
   // Sync cart with localStorage
@@ -325,6 +339,8 @@ export const ProductProvider = ({ children }) => {
     setSearchQuery,
     loading,
     error,
+    settings,
+    setSettings,
     cart,
     isCartOpen,
     setIsCartOpen,

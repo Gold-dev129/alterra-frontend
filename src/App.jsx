@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
+import OrderConfirmed from './pages/OrderConfirmed';
 import { useEffect, useState } from 'react';
 
 const ProtectedAdmin = ({ children }) => {
@@ -96,6 +97,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/order-confirmed" element={<OrderConfirmed />} />
                 <Route
                   path="/admin"
                   element={

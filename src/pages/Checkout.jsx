@@ -29,15 +29,10 @@ export default function Checkout() {
     });
 
     const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);
-    const shippingRates = {
-        'Lead City University': 4000,
-        'Ibadan (Inside City)': 4000,
-        'Lagos': 7000,
-        'Other States (Abuja, PH, Warri, etc.)': 8000,
-        'pickup': 0
-    };
-    const shipping = formData.deliveryMethod === 'pickup' ? 0 : shippingRates[formData.location];
-    const total = subtotal + shipping;
+    const SERVICE_FEE = 1000;
+    const totalServiceFees = (cart || []).reduce((acc, item) => acc + (SERVICE_FEE * (item?.quantity || 0)), 0);
+    const shipping = 0; // Delivery is communicated later
+    const total = subtotal + totalServiceFees;
 
     useEffect(() => {
         if (user && !formData.email) {
@@ -78,9 +73,10 @@ export default function Checkout() {
                     image: item?.images?.[0] || item?.image || '/placeholder.png',
                     customNote: item?.customNote || ''
                 })),
-                shippingDetails: { ...formData, shippingFee: shipping },
+                shippingDetails: { ...formData, shippingFee: 0 },
                 subtotal,
-                shipping,
+                totalServiceFees,
+                shipping: 0,
                 total,
                 paymentReference: reference?.reference || reference?.trxref || 'REF_8.1'
             };
@@ -90,7 +86,7 @@ export default function Checkout() {
                 if (result.success) {
                     localStorage.removeItem('alterra_cart');
                     try { clearCart(); } catch (e) { console.error(e); }
-                    window.location.assign('/');
+                    navigate('/order-confirmed', { state: { order: result.order || orderData } });
                 } else {
                     window.alert("Payment was successful, but there was an error saving your order: " + (result.message || 'Unknown server error') + "\n\nPlease contact support with your payment reference: " + orderData.paymentReference);
                 }
@@ -180,25 +176,17 @@ export default function Checkout() {
                                             <span className="text-[10px] font-bold uppercase">Self Pickup</span>
                                         </button>
                                     </div>
+                                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                                        <p className="text-[11px] font-bold text-amber-800">
+                                            🚚 Delivery takes 1-2 weeks. Payment for delivery will be communicated with you when your products are ready for shipping.
+                                        </p>
+                                    </div>
                                 </div>
 
                                 {formData.deliveryMethod === 'delivery' && (
                                     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Select Delivery Destination</p>
-                                            <select
-                                                name="location"
-                                                value={formData.location}
-                                                onChange={handleInputChange}
-                                                className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all font-bold text-sm"
-                                            >
-                                                <option value="Lead City University">Lead City University (₦4,000)</option>
-                                                <option value="Ibadan (Inside City)">Ibadan (₦4,000)</option>
-                                                <option value="Lagos">Lagos (₦7,000)</option>
-                                                <option value="Other States (Abuja, PH, Warri, etc.)">Other States - Abuja, PH, Warri, etc. (₦8,000)</option>
-                                            </select>
-                                        </div>
                                         <input required name="address" value={formData.address} onChange={handleInputChange} placeholder="Full Shipping Address (Street, Building, etc.)" className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all" />
+                                        <input required name="city" value={formData.city} onChange={handleInputChange} placeholder="City / State" className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all" />
                                     </motion.div>
                                 )}
 
@@ -286,7 +274,8 @@ export default function Checkout() {
                                             </div>
                                             <div className="flex justify-between items-end">
                                                 <span className="text-[10px] font-bold text-slate-400">Qty: {item?.quantity || 1}</span>
-                                                <span className="text-xs font-bold text-slate-900">₦{((item?.price || 0) * (item?.quantity || 1)).toFixed(2)}</span>
+                                                <span className="text-[10px] font-bold text-amber-600">+₦{(1000 * (item?.quantity || 1)).toLocaleString()} fee</span>
+                                                <span className="text-xs font-bold text-slate-900">₦{(((item?.price || 0) + 1000) * (item?.quantity || 1)).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -296,11 +285,15 @@ export default function Checkout() {
                             <div className="space-y-4 pt-6 border-t border-slate-100">
                                 <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     <span>Subtotal</span>
-                                    <span className="text-slate-900">₦{(subtotal || 0).toFixed(2)}</span>
+                                    <span className="text-slate-900">₦{(subtotal || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <span>Service Fees</span>
+                                    <span className="text-slate-900">₦{(totalServiceFees || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-50 pt-4">
                                     <span className="font-serif italic text-2xl text-slate-900">Total</span>
-                                    <span className="text-2xl font-bold tracking-tight text-slate-900">₦{(total || 0).toFixed(2)}</span>
+                                    <span className="text-2xl font-bold tracking-tight text-slate-900">₦{(total || 0).toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>

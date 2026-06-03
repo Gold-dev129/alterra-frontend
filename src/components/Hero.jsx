@@ -1,15 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import heroBg from '../assets/hero-bg.jpg';
+import { useProducts } from '../context/ProductContext';
 
 export default function Hero() {
+    const { settings } = useProducts();
+    const bgImage = settings?.dashboard_header_url || heroBg;
+
     return (
         <section className="relative h-screen w-full overflow-hidden flex items-center justify-center bg-[#0a0a0a]">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute inset-0 bg-black/30 z-10" />
                 <img
-                    src={heroBg}
+                    src={bgImage}
                     alt="Hero Background"
                     className="w-full h-full object-cover object-[center_20%]"
                 />

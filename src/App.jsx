@@ -1,8 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ProductProvider, useProducts } from './context/ProductContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from './components/Header';
+import ScrollToTop from './components/ScrollToTop';
 import ShoppingCart from './components/ShoppingCart';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -87,6 +88,7 @@ function App() {
     <AuthProvider>
       <ProductProvider>
         <Router>
+          <ScrollToTop />
           <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
             <Toast />
             <Header logoUrl={siteSettings?.logo_url} />

@@ -58,8 +58,8 @@ export default function Checkout() {
         channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
         text: "Complete Purchase",
         onSuccess: async (reference) => {
-            console.log('--- !!! RELIABILITY VERSION 8.1 SUCCESS !!! ---', reference);
-            window.alert("PAYMENT SUCCESSFUL!\n\nYour order is being saved and you'll be redirected now.");
+            console.log('--- !!! RELIABILITY VERSION 8.2 SUCCESS !!! ---', reference);
+            setIsOrderSuccessful(true);
             
             const orderData = {
                 items: (cart || []).map(item => ({
@@ -88,10 +88,12 @@ export default function Checkout() {
                     try { clearCart(); } catch (e) { console.error(e); }
                     navigate('/order-confirmed', { state: { order: result.order || orderData } });
                 } else {
+                    setIsOrderSuccessful(false);
                     window.alert("Payment was successful, but there was an error saving your order: " + (result.message || 'Unknown server error') + "\n\nPlease contact support with your payment reference: " + orderData.paymentReference);
                 }
             } catch (err) {
                 console.error("Order Creation Error:", err);
+                setIsOrderSuccessful(false);
                 window.alert("Payment successful but order saving failed. Please contact support with your reference: " + orderData.paymentReference);
             }
         },
@@ -111,9 +113,10 @@ export default function Checkout() {
     if (isOrderSuccessful) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-                <CheckCircle className="w-16 h-16 text-green-500 mb-6" />
-                <h2 className="text-3xl font-serif italic text-slate-900 mb-4">Redirecting...</h2>
-                <Loader2 className="w-6 h-6 animate-spin text-slate-200" />
+                <CheckCircle className="w-16 h-16 text-green-500 mb-6 animate-pulse" />
+                <h2 className="text-3xl font-serif italic text-slate-900 mb-2">Payment Successful!</h2>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">Saving your order details, please do not close this page...</p>
+                <Loader2 className="w-6 h-6 animate-spin text-slate-900" />
             </div>
         );
     }

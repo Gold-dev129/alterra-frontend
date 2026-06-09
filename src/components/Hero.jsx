@@ -8,7 +8,7 @@ export default function Hero() {
     const bgImage = settings?.dashboard_header_url || heroBg;
 
     return (
-        <section className="relative h-screen w-full overflow-hidden flex items-center justify-center bg-[#0a0a0a]">
+        <section className="relative h-[60vh] w-full overflow-hidden flex items-center justify-center bg-[#0a0a0a]">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute inset-0 bg-black/30 z-10" />

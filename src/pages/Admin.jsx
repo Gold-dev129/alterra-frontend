@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Package, ShoppingBag, Trash2, AlertCircle,
-    Image, Loader2, Type, Tag, CheckCircle2, Palette, Upload
+    Image, Loader2, Type, Tag, CheckCircle2, Palette, Upload, Search
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 
@@ -16,6 +16,8 @@ export default function Admin() {
     const [activeTab, setActiveTab] = useState('products'); // 'products', 'orders', 'branding'
     const [settings, setSettings] = useState({ logo_url: '', dashboard_header_url: '' });
     const [isUpdatingBranding, setIsUpdatingBranding] = useState(false);
+    const [orderSearchQuery, setOrderSearchQuery] = useState('');
+    const [tempSearchVal, setTempSearchVal] = useState('');
     const [status, setStatus] = useState({ type: '', message: '' });
     const [newOrderAlert, setNewOrderAlert] = useState(null);
     const [formData, setFormData] = useState({
@@ -645,16 +647,76 @@ export default function Admin() {
                                     </button>
                                 </div>
 
+                                {/* Order Search Bar */}
+                                <form 
+                                    onSubmit={(e) => { 
+                                        e.preventDefault(); 
+                                        setOrderSearchQuery(tempSearchVal); 
+                                    }} 
+                                    className="flex gap-3 w-full"
+                                >
+                                    <div className="relative flex-grow flex items-center bg-white border border-slate-200 focus-within:border-slate-400 rounded-2xl px-4 py-3.5 shadow-sm transition-all">
+                                        <Search className="w-5 h-5 text-slate-400 shrink-0 mr-3" />
+                                        <input 
+                                            type="text" 
+                                            placeholder="Enter Order Number, Email, or Phone Number..." 
+                                            value={tempSearchVal}
+                                            onChange={(e) => setTempSearchVal(e.target.value)}
+                                            className="w-full bg-transparent text-slate-800 placeholder:text-slate-400 text-xs font-semibold outline-none border-none"
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit" 
+                                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl transition-all shadow-md active:scale-95 shrink-0 cursor-pointer"
+                                    >
+                                        Search
+                                    </button>
+                                    {orderSearchQuery && (
+                                        <button 
+                                            type="button"
+                                            onClick={() => { 
+                                                setTempSearchVal(''); 
+                                                setOrderSearchQuery(''); 
+                                            }}
+                                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl transition-all shrink-0 cursor-pointer"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </form>
+
                                 <div className="space-y-4">
                                     {loading ? (
                                         <div className="py-20 flex justify-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100"><Loader2 className="w-8 h-8 animate-spin text-slate-200" /></div>
-                                    ) : orders.length === 0 ? (
-                                        <div className="py-20 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
-                                            <ShoppingBag className="w-12 h-12 text-slate-100 mx-auto mb-4" />
-                                            <p className="italic text-slate-400">No orders received yet.</p>
-                                        </div>
-                                    ) : (
-                                        orders.map((order) => (
+                                    ) : (() => {
+                                        const filteredOrders = orders.filter(order => {
+                                            if (!orderSearchQuery) return true;
+                                            const query = orderSearchQuery.toLowerCase().trim();
+                                            const orderNum = (order.orderNumber || '').toLowerCase();
+                                            const email = (order.shippingDetails?.email || '').toLowerCase();
+                                            const phone = (order.shippingDetails?.phone || '').toLowerCase();
+                                            return orderNum.includes(query) || email.includes(query) || phone.includes(query);
+                                        });
+
+                                        if (orders.length === 0) {
+                                            return (
+                                                <div className="py-20 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+                                                    <ShoppingBag className="w-12 h-12 text-slate-100 mx-auto mb-4" />
+                                                    <p className="italic text-slate-400">No orders received yet.</p>
+                                                </div>
+                                            );
+                                        }
+
+                                        if (filteredOrders.length === 0) {
+                                            return (
+                                                <div className="py-20 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+                                                    <ShoppingBag className="w-12 h-12 text-slate-100 mx-auto mb-4" />
+                                                    <p className="italic text-slate-400">No orders match your search criteria.</p>
+                                                </div>
+                                            );
+                                        }
+
+                                        return filteredOrders.map((order) => (
                                             <div key={order._id} className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
                                                 <div className="p-6 sm:p-8 space-y-6">
                                                     <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-slate-50">
@@ -749,7 +811,7 @@ export default function Admin() {
                                                 </div>
                                             </div>
                                         ))
-                                    )}
+                                    })()}
                                 </div>
                             </motion.div>
                         )}
@@ -788,12 +850,19 @@ export default function Admin() {
                                                                     setIsUpdatingBranding(true);
                                                                     const res = await fetch('https://alterra-node.onrender.com/api/products/upload', {
                                                                         method: 'POST',
+                                                                        headers: {
+                                                                            'Authorization': `Bearer ${token}`
+                                                                        },
                                                                         body: formData
                                                                     });
+                                                                    if (!res.ok) {
+                                                                        const errData = await res.json().catch(() => ({}));
+                                                                        throw new Error(errData.message || 'Logo upload failed.');
+                                                                    }
                                                                     const data = await res.json();
                                                                     if (data.url) await handleUpdateSetting('logo_url', data.url);
                                                                 } catch (err) {
-                                                                    setStatus({ type: 'error', message: 'Logo upload failed.' });
+                                                                    setStatus({ type: 'error', message: err.message || 'Logo upload failed.' });
                                                                 } finally {
                                                                     setIsUpdatingBranding(false);
                                                                 }
@@ -834,15 +903,22 @@ export default function Admin() {
                                                                     setIsUpdatingBranding(true);
                                                                     const res = await fetch('https://alterra-node.onrender.com/api/products/upload', {
                                                                         method: 'POST',
+                                                                        headers: {
+                                                                            'Authorization': `Bearer ${token}`
+                                                                        },
                                                                         body: formData
                                                                     });
+                                                                    if (!res.ok) {
+                                                                        const errData = await res.json().catch(() => ({}));
+                                                                        throw new Error(errData.message || 'Hero upload failed.');
+                                                                    }
                                                                     const data = await res.json();
                                                                     if (data.url) {
                                                                         await handleUpdateSetting('dashboard_header_url', data.url);
                                                                         setDashboardHeaderImg(data.url);
                                                                     }
                                                                 } catch (err) {
-                                                                    setStatus({ type: 'error', message: 'Hero upload failed.' });
+                                                                    setStatus({ type: 'error', message: err.message || 'Hero upload failed.' });
                                                                 } finally {
                                                                     setIsUpdatingBranding(false);
                                                                 }

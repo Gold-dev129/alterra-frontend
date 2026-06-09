@@ -54,8 +54,9 @@ export const ProductProvider = ({ children }) => {
         const response = await fetch('https://alterra-node.onrender.com/api/products');
         const data = await response.json();
         if (response.ok && data.data && Array.isArray(data.data.products)) {
-          setProducts(data.data.products);
-          localStorage.setItem('alterra_products_cache', JSON.stringify(data.data.products));
+          const sorted = [...data.data.products].sort((a, b) => b._id.localeCompare(a._id));
+          setProducts(sorted);
+          localStorage.setItem('alterra_products_cache', JSON.stringify(sorted));
         } else {
           if (!localStorage.getItem('alterra_products_cache')) {
             setError(data.message || 'Failed to fetch products');
@@ -110,7 +111,7 @@ export const ProductProvider = ({ children }) => {
       const data = await response.json();
       if (response.ok) {
         setProducts(prev => {
-          const newProducts = [...prev, data.data.product];
+          const newProducts = [data.data.product, ...prev];
           localStorage.setItem('alterra_products_cache', JSON.stringify(newProducts));
           return newProducts;
         });

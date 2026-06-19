@@ -20,7 +20,14 @@ export const ProductProvider = ({ children }) => {
     return !localStorage.getItem('alterra_products_cache');
   });
   const [error, setError] = useState(null);
-  const [settings, setSettings] = useState({ logo_url: '', dashboard_header_url: '' });
+  const [settings, setSettings] = useState(() => {
+    try {
+      const cached = localStorage.getItem('alterra_settings_cache');
+      return cached ? JSON.parse(cached) : { logo_url: '', dashboard_header_url: '' };
+    } catch {
+      return { logo_url: '', dashboard_header_url: '' };
+    }
+  });
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -77,6 +84,7 @@ export const ProductProvider = ({ children }) => {
         const data = await response.json();
         if (response.ok && data.data) {
           setSettings(data.data);
+          localStorage.setItem('alterra_settings_cache', JSON.stringify(data.data));
         }
       } catch (err) {
         console.error('Failed to load settings', err);

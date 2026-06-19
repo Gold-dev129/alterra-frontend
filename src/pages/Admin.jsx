@@ -14,7 +14,14 @@ export default function Admin() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editId, setEditId] = useState(null); // ID of product being edited
     const [activeTab, setActiveTab] = useState('products'); // 'products', 'orders', 'branding'
-    const [settings, setSettings] = useState({ logo_url: '', dashboard_header_url: '' });
+    const [settings, setSettings] = useState(() => {
+        try {
+            const cached = localStorage.getItem('alterra_settings_cache');
+            return cached ? JSON.parse(cached) : { logo_url: '', dashboard_header_url: '' };
+        } catch {
+            return { logo_url: '', dashboard_header_url: '' };
+        }
+    });
     const [isUpdatingBranding, setIsUpdatingBranding] = useState(false);
     const [orderSearchQuery, setOrderSearchQuery] = useState('');
     const [tempSearchVal, setTempSearchVal] = useState('');
@@ -56,7 +63,16 @@ export default function Admin() {
         setSizeChartColumns([...sizeChartColumns, cleanKey]);
         setSizeChart(sizeChart.map(row => ({ ...row, [cleanKey]: '' })));
     };
-    const [dashboardHeaderImg, setDashboardHeaderImg] = useState('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop');
+    const [dashboardHeaderImg, setDashboardHeaderImg] = useState(() => {
+        try {
+            const cached = localStorage.getItem('alterra_settings_cache');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed.dashboard_header_url) return parsed.dashboard_header_url;
+            }
+        } catch {}
+        return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop';
+    });
 
     useEffect(() => {
         if (token) {
@@ -106,6 +122,7 @@ export default function Admin() {
                 const data = await response.json();
                 if (data.status === 'success') {
                     setSettings(data.data);
+                    localStorage.setItem('alterra_settings_cache', JSON.stringify(data.data));
                     if (data.data.dashboard_header_url) setDashboardHeaderImg(data.data.dashboard_header_url);
                 }
             } catch (err) {
@@ -128,7 +145,11 @@ export default function Admin() {
             });
             const data = await response.json();
             if (data.status === 'success') {
-                setSettings(prev => ({ ...prev, [key]: value }));
+                setSettings(prev => {
+                    const newSettings = { ...prev, [key]: value };
+                    localStorage.setItem('alterra_settings_cache', JSON.stringify(newSettings));
+                    return newSettings;
+                });
                 setStatus({ type: 'success', message: `${key.replace(/_/g, ' ')} updated successfully!` });
             }
         } catch (err) {

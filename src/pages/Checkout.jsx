@@ -30,9 +30,11 @@ export default function Checkout() {
 
     const deliveryLocations = [
         { name: 'Lead City University', fee: 4000 },
+        { name: 'Ibadan', fee: 4000 },
         { name: 'Babcock', fee: 6000 },
+        { name: 'Osun State', fee: 6000 },
         { name: 'Lagos State', fee: 7000 },
-        { name: 'Abuja', fee: 8000 }
+        { name: 'Abuja and other states i.e. Edo, Port Harcourt, Ekiti', fee: 8500 }
     ];
 
     const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);

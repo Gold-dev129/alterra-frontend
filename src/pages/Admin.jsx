@@ -9,7 +9,7 @@ import {
 import { io } from 'socket.io-client';
 
 export default function Admin() {
-    const { products, orders, fetchOrders, updateOrderStatus, addProduct, updateProduct, deleteProduct, loading } = useProducts();
+    const { products, orders, fetchOrders, updateOrderStatus, updateOrderFulfillment, addProduct, updateProduct, deleteProduct, loading } = useProducts();
     const { token } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editId, setEditId] = useState(null); // ID of product being edited
@@ -24,6 +24,7 @@ export default function Admin() {
     });
     const [isUpdatingBranding, setIsUpdatingBranding] = useState(false);
     const [orderSearchQuery, setOrderSearchQuery] = useState('');
+    const [fulfillmentFilter, setFulfillmentFilter] = useState('All');
     const [tempSearchVal, setTempSearchVal] = useState('');
     const [status, setStatus] = useState({ type: '', message: '' });
     const [newOrderAlert, setNewOrderAlert] = useState(null);
@@ -33,6 +34,7 @@ export default function Admin() {
         description: '',
         stock: '10',
         isNewIn: false,
+        isSoldOut: false,
         colors: '',
         waistOptions: []
     });
@@ -176,6 +178,7 @@ export default function Admin() {
             description: product.description || '',
             stock: product.stock || '10',
             isNewIn: product.isNewIn || false,
+            isSoldOut: product.isSoldOut || false,
             colors: (product.colors || []).join(', '),
             waistOptions: product.waistOptions || []
         });
@@ -207,7 +210,7 @@ export default function Admin() {
 
     const handleCancelEdit = () => {
         setEditId(null);
-        setFormData({ name: '', price: '', description: '', stock: '10', isNewIn: false, colors: '', waistOptions: [] });
+        setFormData({ name: '', price: '', description: '', stock: '10', isNewIn: false, isSoldOut: false, colors: '', waistOptions: [] });
         setSizeChart([
             { label: 'S', chest: '', waist: '', length: '', sleeve: '' },
             { label: 'M', chest: '', waist: '', length: '', sleeve: '' },
@@ -230,6 +233,7 @@ export default function Admin() {
         data.append('description', formData.description);
         data.append('stock', formData.stock);
         data.append('isNewIn', formData.isNewIn);
+        data.append('isSoldOut', formData.isSoldOut);
         data.append('colors', formData.colors);
         data.append('waistOptions', JSON.stringify(formData.waistOptions));
         data.append('sizeChart', JSON.stringify(sizeChart));
@@ -516,14 +520,26 @@ export default function Admin() {
                                             </div>
                                         </div>
 
-                                        <div
-                                            className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white transition-colors"
-                                            onClick={() => setFormData({ ...formData, isNewIn: !formData.isNewIn })}
-                                        >
-                                            <div className={`w-10 h-6 rounded-full transition-colors relative ${formData.isNewIn ? 'bg-slate-900' : 'bg-slate-200'}`}>
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.isNewIn ? 'left-5' : 'left-1'}`} />
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div
+                                                className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white transition-colors"
+                                                onClick={() => setFormData({ ...formData, isNewIn: !formData.isNewIn })}
+                                            >
+                                                <div className={`w-10 h-6 rounded-full transition-colors relative ${formData.isNewIn ? 'bg-slate-900' : 'bg-slate-200'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.isNewIn ? 'left-5' : 'left-1'}`} />
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-900">Show "New In" Badge</span>
                                             </div>
-                                            <span className="text-sm font-bold text-slate-900">Show "New In" Badge</span>
+
+                                            <div
+                                                className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white transition-colors"
+                                                onClick={() => setFormData({ ...formData, isSoldOut: !formData.isSoldOut })}
+                                            >
+                                                <div className={`w-10 h-6 rounded-full transition-colors relative ${formData.isSoldOut ? 'bg-red-500' : 'bg-slate-200'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.isSoldOut ? 'left-5' : 'left-1'}`} />
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-900">Mark "Sold Out"</span>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-3 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
@@ -706,17 +722,46 @@ export default function Admin() {
                                     )}
                                 </form>
 
+                                {/* Fulfillment Filter Tabs */}
+                                <div className="flex gap-2 border-b border-slate-100 pb-2">
+                                    {['All', 'Unfulfilled', 'Fulfilled'].map(filter => (
+                                        <button
+                                            key={filter}
+                                            type="button"
+                                            onClick={() => setFulfillmentFilter(filter)}
+                                            className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                                                fulfillmentFilter === filter 
+                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                                                    : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            {filter}
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <div className="space-y-4">
                                     {loading ? (
                                         <div className="py-20 flex justify-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100"><Loader2 className="w-8 h-8 animate-spin text-slate-200" /></div>
                                     ) : (() => {
                                         const filteredOrders = orders.filter(order => {
-                                            if (!orderSearchQuery) return true;
-                                            const query = orderSearchQuery.toLowerCase().trim();
-                                            const orderNum = (order.orderNumber || '').toLowerCase();
-                                            const email = (order.shippingDetails?.email || '').toLowerCase();
-                                            const phone = (order.shippingDetails?.phone || '').toLowerCase();
-                                            return orderNum.includes(query) || email.includes(query) || phone.includes(query);
+                                            let matchesSearch = true;
+                                            if (orderSearchQuery) {
+                                                const query = orderSearchQuery.toLowerCase().trim();
+                                                const orderNum = (order.orderNumber || '').toLowerCase();
+                                                const email = (order.shippingDetails?.email || '').toLowerCase();
+                                                const phone = (order.shippingDetails?.phone || '').toLowerCase();
+                                                matchesSearch = orderNum.includes(query) || email.includes(query) || phone.includes(query);
+                                            }
+
+                                            let matchesFulfillment = true;
+                                            if (fulfillmentFilter === 'Fulfilled') {
+                                                matchesFulfillment = order.isFulfilled === true;
+                                            } else if (fulfillmentFilter === 'Unfulfilled') {
+                                                matchesFulfillment = order.isFulfilled !== true;
+                                            }
+
+                                            return matchesSearch && matchesFulfillment;
                                         });
 
                                         if (orders.length === 0) {
@@ -828,6 +873,25 @@ export default function Admin() {
                                                         <p className="text-xs text-slate-600 italic">
                                                             {order.shippingDetails?.address}, {order.shippingDetails?.city}, {order.shippingDetails?.zipCode}
                                                         </p>
+                                                    </div>
+
+                                                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-100">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fulfillment Status:</span>
+                                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${order.isFulfilled ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                                                                {order.isFulfilled ? 'Fulfilled ✅' : 'Unfulfilled ❌'}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => updateOrderFulfillment(order._id, !order.isFulfilled, token)}
+                                                            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                                                order.isFulfilled 
+                                                                    ? 'bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200' 
+                                                                    : 'bg-green-600 hover:bg-green-500 text-white shadow-sm'
+                                                            }`}
+                                                        >
+                                                            {order.isFulfilled ? 'Mark as Unfulfilled' : 'Mark as Fulfilled'}
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>

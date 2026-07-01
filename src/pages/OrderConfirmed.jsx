@@ -21,11 +21,12 @@ export default function OrderConfirmed() {
                 <div className="bg-white rounded-[2rem] p-8 sm:p-12 border border-slate-100 shadow-sm text-center">
                     <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
                     <h1 className="text-4xl font-serif font-bold italic text-slate-900 mb-4">Order Confirmed!</h1>
-                    <p className="text-slate-500 mb-8">Thank you for your purchase, {order.shippingDetails?.firstName}. Your order number is <span className="font-bold text-slate-900">{order.orderNumber || 'Pending'}</span>.</p>
+                    <p className="text-slate-500 mb-2">Thank you for your purchase, {order.shippingDetails?.firstName}. Your order number is <span className="font-bold text-slate-900">{order.orderNumber || 'Pending'}</span>.</p>
+                    <p className="text-slate-500 text-sm mb-8">Confirmation email sent to <span className="font-bold text-slate-900">{order.shippingDetails?.email || 'your email'}</span>.</p>
                     
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-10 text-left">
                         <h3 className="font-bold text-amber-900 mb-2">🚚 Delivery Information</h3>
-                        <p className="text-amber-800 text-sm">Delivery takes 1-2 weeks. Payment for delivery will be communicated with you when your products are ready for shipping.</p>
+                        <p className="text-amber-800 text-sm">Delivery takes 1-2 weeks. You will receive progress notifications as your order goes through production and shipping.</p>
                     </div>
 
                     <div className="bg-slate-50 rounded-2xl p-6 md:p-8 text-left border border-slate-100">

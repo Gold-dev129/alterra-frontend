@@ -114,6 +114,11 @@ export default function ProductDetails() {
                         className="lg:col-span-7 space-y-6"
                     >
                         <div className="bg-slate-50 rounded-[2rem] overflow-hidden aspect-[4/5] relative group shadow-sm">
+                            {product.isSoldOut && (
+                                <span className="absolute top-6 left-6 bg-red-600 text-white text-[11px] font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-md z-10">
+                                    SOLD OUT
+                                </span>
+                            )}
                             <AnimatePresence mode="wait">
                                 <motion.img
                                     key={selectedImageIdx}
@@ -269,38 +274,49 @@ export default function ProductDetails() {
 
                         <div className="space-y-6 pt-6 border-t border-slate-100">
                             <div className="flex items-center gap-6">
-                                <div className="flex items-center border-2 border-slate-100 rounded-2xl p-2 h-16 bg-slate-50/30">
+                                {product.isSoldOut ? (
                                     <button
-                                        onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                        className="w-12 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
+                                        disabled
+                                        className="w-full bg-red-650 bg-red-600 text-white rounded-full h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm font-black shadow-xl"
                                     >
-                                        <Minus className="w-5 h-5" />
+                                        SOLD OUT
                                     </button>
-                                    <span className="w-12 text-center text-lg font-bold text-slate-900">{quantity}</span>
-                                    <button
-                                        onClick={() => setQuantity(q => q + 1)}
-                                        className="w-12 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
-                                    >
-                                        <Plus className="w-5 h-5" />
-                                    </button>
-                                </div>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center border-2 border-slate-100 rounded-2xl p-2 h-16 bg-slate-50/30">
+                                            <button
+                                                onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                                                className="w-12 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
+                                            >
+                                                <Minus className="w-5 h-5" />
+                                            </button>
+                                            <span className="w-12 text-center text-lg font-bold text-slate-900">{quantity}</span>
+                                            <button
+                                                onClick={() => setQuantity(q => q + 1)}
+                                                className="w-12 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
+                                            >
+                                                <Plus className="w-5 h-5" />
+                                            </button>
+                                        </div>
 
-                                <button
-                                    onClick={() => {
-                                        for (let i = 0; i < quantity; i++) {
-                                            addToCart(product, {
-                                                size: selectedSize,
-                                                color: selectedColor,
-                                                waist: selectedWaist,
-                                                customNote: customNote
-                                            });
-                                        }
-                                    }}
-                                    className="flex-grow btn-premium h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm shadow-xl shadow-slate-200"
-                                >
-                                    <ShoppingBag className="w-5 h-5" />
-                                    Add to Bag
-                                </button>
+                                        <button
+                                            onClick={() => {
+                                                for (let i = 0; i < quantity; i++) {
+                                                    addToCart(product, {
+                                                        size: selectedSize,
+                                                        color: selectedColor,
+                                                        waist: selectedWaist,
+                                                        customNote: customNote
+                                                    });
+                                                }
+                                            }}
+                                            className="flex-grow btn-premium h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm shadow-xl shadow-slate-200"
+                                        >
+                                            <ShoppingBag className="w-5 h-5" />
+                                            Add to Bag
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
 

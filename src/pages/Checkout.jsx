@@ -23,16 +23,25 @@ export default function Checkout() {
         deliveryMethod: 'delivery',
         address: '',
         city: '',
-        location: 'Lagos',
+        location: 'Lead City University',
         zipCode: '',
         country: 'Nigeria'
     });
 
+    const deliveryLocations = [
+        { name: 'Lead City University', fee: 4000 },
+        { name: 'Babcock', fee: 6000 },
+        { name: 'Lagos State', fee: 7000 },
+        { name: 'Abuja', fee: 8000 }
+    ];
+
     const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);
     const SERVICE_FEE = 1000;
     const totalServiceFees = (cart || []).reduce((acc, item) => acc + (SERVICE_FEE * (item?.quantity || 0)), 0);
-    const shipping = 0; // Delivery is communicated later
-    const total = subtotal + totalServiceFees;
+    const shipping = formData.deliveryMethod === 'pickup' 
+        ? 0 
+        : (deliveryLocations.find(l => l.name === formData.location)?.fee || 4000);
+    const total = subtotal + totalServiceFees + shipping;
 
     useEffect(() => {
         if (user && !formData.email) {
@@ -73,10 +82,14 @@ export default function Checkout() {
                     image: item?.images?.[0] || item?.image || '/placeholder.png',
                     customNote: item?.customNote || ''
                 })),
-                shippingDetails: { ...formData, shippingFee: 0 },
+                shippingDetails: { 
+                    ...formData, 
+                    state: formData.deliveryMethod === 'pickup' ? 'N/A' : formData.location,
+                    shippingFee: shipping 
+                },
                 subtotal,
                 totalServiceFees,
-                shipping: 0,
+                shipping,
                 total,
                 paymentReference: reference?.reference || reference?.trxref || 'REF_8.1'
             };
@@ -181,15 +194,30 @@ export default function Checkout() {
                                     </div>
                                     <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                                         <p className="text-[11px] font-bold text-amber-800">
-                                            🚚 Delivery takes 1-2 weeks. Payment for delivery will be communicated with you when your products are ready for shipping.
+                                            🚚 Delivery takes 1-2 weeks. Delivery fees are selected below and paid along with your order.
                                         </p>
                                     </div>
                                 </div>
 
                                 {formData.deliveryMethod === 'delivery' && (
                                     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Select Region / University</label>
+                                            <select
+                                                name="location"
+                                                value={formData.location}
+                                                onChange={handleInputChange}
+                                                className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all text-xs font-bold uppercase tracking-wider text-slate-800"
+                                            >
+                                                {deliveryLocations.map(loc => (
+                                                    <option key={loc.name} value={loc.name}>
+                                                        {loc.name} - ₦{loc.fee.toLocaleString()}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                         <input required name="address" value={formData.address} onChange={handleInputChange} placeholder="Full Shipping Address (Street, Building, etc.)" className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all" />
-                                        <input required name="city" value={formData.city} onChange={handleInputChange} placeholder="City / State" className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all" />
+                                        <input required name="city" value={formData.city} onChange={handleInputChange} placeholder="City" className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all" />
                                     </motion.div>
                                 )}
 
@@ -293,6 +321,10 @@ export default function Checkout() {
                                 <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     <span>Service Fees</span>
                                     <span className="text-slate-900">₦{(totalServiceFees || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <span>Delivery Fee</span>
+                                    <span className="text-slate-900">{shipping === 0 ? 'Free (Pickup)' : `₦${shipping.toLocaleString()}`}</span>
                                 </div>
                                 <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-50 pt-4">
                                     <span className="font-serif italic text-2xl text-slate-900">Total</span>

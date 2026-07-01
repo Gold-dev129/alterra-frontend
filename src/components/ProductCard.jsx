@@ -68,24 +68,30 @@ export default function ProductCard({ product, index }) {
         )}
 
         {/* Overlay Actions */}
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6 gap-3 pointer-events-none">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              addToCart(product);
-            }}
-            className="bg-white text-slate-900 w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white pointer-events-auto"
-          >
-            <Plus className="w-4 h-4" /> Quick Add
-          </button>
-        </div>
+        {!product.isSoldOut && (
+          <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6 gap-3 pointer-events-none">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                addToCart(product);
+              }}
+              className="bg-white text-slate-900 w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white pointer-events-auto"
+            >
+              <Plus className="w-4 h-4" /> Quick Add
+            </button>
+          </div>
+        )}
 
         {/* Badge */}
-        {product.isNewIn && (
+        {product.isSoldOut ? (
+          <span className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm z-20">
+            SOLD OUT
+          </span>
+        ) : product.isNewIn ? (
           <span className="absolute top-4 left-4 bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
             New In
           </span>
-        )}
+        ) : null}
       </div>
 
       <div className="space-y-1 mt-3 sm:mt-4">

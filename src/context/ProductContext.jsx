@@ -331,6 +331,27 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
+  const updateOrderFulfillment = async (orderId, isFulfilled, token) => {
+    try {
+      const response = await fetch(`https://alterra-node.onrender.com/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ isFulfilled })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setOrders(prev => prev.map(o => o._id === orderId ? data.data.order : o));
+        return { success: true };
+      }
+      return { success: false, message: data.message };
+    } catch (err) {
+      return { success: false, message: 'Error updating order fulfillment' };
+    }
+  };
+
   const clearCart = () => {
     localStorage.removeItem('alterra_cart');
     setCart([]);
@@ -343,6 +364,7 @@ export const ProductProvider = ({ children }) => {
     orders,
     fetchOrders,
     updateOrderStatus,
+    updateOrderFulfillment,
     filteredProducts,
     searchQuery,
     setSearchQuery,

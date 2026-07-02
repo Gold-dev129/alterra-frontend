@@ -4,7 +4,7 @@ import { useProducts } from '../context/ProductContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CreditCard, Truck, ShieldCheck, CheckCircle, ShoppingBag, Loader2, X, Plus, Minus, AlertCircle } from 'lucide-react';
-import { PaystackButton } from 'react-paystack';
+import { usePaystackPayment } from 'react-paystack';
 
 export default function Checkout() {
     console.log('--- ALTERRA CHECKOUT VERSION 8.0 [ULTRA-RELIABILITY] ---', new Date().toLocaleTimeString());
@@ -14,6 +14,8 @@ export default function Checkout() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
     const [isOrderSuccessful, setIsOrderSuccessful] = useState(false);
+    const [pendingOrder, setPendingOrder] = useState(null);
+    const [payReference, setPayReference] = useState(() => (new Date()).getTime().toString());
 
     const [formData, setFormData] = useState({
         email: user?.email || '',
@@ -23,23 +25,30 @@ export default function Checkout() {
         deliveryMethod: 'delivery',
         address: '',
         city: '',
-        location: 'Lead City University',
+        location: 'Lagos',
         zipCode: '',
         country: 'Nigeria'
     });
 
-    const deliveryLocations = [
-        { name: 'Lead City University', fee: 4000 },
-        { name: 'Ibadan', fee: 4000 },
-        { name: 'Babcock', fee: 6000 },
-        { name: 'Osun State', fee: 6000 },
-        { name: 'Lagos State', fee: 7000 },
-        { name: 'Abuja and other states i.e. Edo, Port Harcourt, Ekiti', fee: 8500 }
-    ];
-
     const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);
     const SERVICE_FEE = 1000;
     const totalServiceFees = (cart || []).reduce((acc, item) => acc + (SERVICE_FEE * (item?.quantity || 0)), 0);
+    
+    // Shipping locations configuration
+    const deliveryLocations = [
+        { name: 'Lagos', fee: 4000 },
+        { name: 'Ogun', fee: 5000 },
+        { name: 'Oyo', fee: 5500 },
+        { name: 'Osun', fee: 6000 },
+        { name: 'Ondo', fee: 6000 },
+        { name: 'Ekiti', fee: 6000 },
+        { name: 'Other State (Mainland)', fee: 7000 },
+        { name: 'Abuja', fee: 7500 },
+        { name: 'Port Harcourt', fee: 7500 },
+        { name: 'Eastern Region', fee: 8000 },
+        { name: 'Northern Region', fee: 8500 }
+    ];
+
     const shipping = formData.deliveryMethod === 'pickup' 
         ? 0 
         : (deliveryLocations.find(l => l.name === formData.location)?.fee || 4000);
@@ -61,67 +70,98 @@ export default function Checkout() {
     };
 
     const paystackConfig = {
-        reference: (new Date()).getTime().toString(),
+        reference: payReference,
         email: formData?.email || 'customer@example.com',
         amount: Math.round((total || 0) * 100) || 100,
         publicKey: 'pk_live_de2d005e95d26e65feb09a0d9865bd43c6b6c5f3',
         currency: 'NGN',
-        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
-        text: "Complete Purchase",
-        onSuccess: async (reference) => {
-            console.log('--- !!! RELIABILITY VERSION 8.2 SUCCESS !!! ---', reference);
-            setIsOrderSuccessful(true);
-            
-            const orderData = {
-                items: (cart || []).map(item => ({
-                    product: item?._id,
-                    name: item?.name,
-                    price: item?.price || 0,
-                    quantity: item?.quantity || 1,
-                    size: item?.selectedSize || 'M',
-                    color: item?.selectedColor || 'Black',
-                    waist: item?.selectedWaist || '',
-                    image: item?.images?.[0] || item?.image || '/placeholder.png',
-                    customNote: item?.customNote || ''
-                })),
-                shippingDetails: { 
-                    ...formData, 
-                    state: formData.deliveryMethod === 'pickup' ? 'N/A' : formData.location,
-                    shippingFee: shipping 
-                },
-                subtotal,
-                totalServiceFees,
-                shipping,
-                total,
-                paymentReference: reference?.reference || reference?.trxref || 'REF_8.1'
-            };
-
-            try {
-                const result = await createOrder(orderData);
-                if (result.success) {
-                    localStorage.removeItem('alterra_cart');
-                    try { clearCart(); } catch (e) { console.error(e); }
-                    navigate('/order-confirmed', { state: { order: result.order || orderData } });
-                } else {
-                    setIsOrderSuccessful(false);
-                    window.alert("Payment was successful, but there was an error saving your order: " + (result.message || 'Unknown server error') + "\n\nPlease contact support with your payment reference: " + orderData.paymentReference);
-                }
-            } catch (err) {
-                console.error("Order Creation Error:", err);
-                setIsOrderSuccessful(false);
-                window.alert("Payment successful but order saving failed. Please contact support with your reference: " + orderData.paymentReference);
-            }
-        },
-        onClose: () => {
-            console.log('--- Payment Modal Closed ---');
-            setIsProcessing(false);
-            setError('Payment was cancelled.');
-        },
+        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer']
     };
 
-    const handlePlaceOrder = (e) => {
-        e.preventDefault();
-        // Validation is handled by basic HTML 'required' and button state
+    const initializePayment = usePaystackPayment(paystackConfig);
+
+    const onSuccess = async (reference) => {
+        console.log('--- !!! PAYMENT SUCCESS !!! ---', reference);
+        setIsOrderSuccessful(true);
+        setIsProcessing(false);
+        const refStr = reference?.reference || reference?.trxref || 'REF_PROGRAMMATIC';
+
+        try {
+            const res = await fetch(`https://alterra-node.onrender.com/api/orders/${pendingOrder._id}/pay`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ paymentReference: refStr })
+            });
+            const data = await res.json();
+            
+            localStorage.removeItem('alterra_cart');
+            try { clearCart(); } catch (e) { console.error(e); }
+            navigate('/order-confirmed', { state: { order: data.data?.order || pendingOrder } });
+        } catch (err) {
+            console.error("Payment confirmation failed on client:", err);
+            localStorage.removeItem('alterra_cart');
+            try { clearCart(); } catch (e) { console.error(e); }
+            navigate('/order-confirmed', { state: { order: pendingOrder } });
+        }
+    };
+
+    const onClose = () => {
+        console.log('--- Payment Modal Closed ---');
+        setIsProcessing(false);
+        setPendingOrder(null);
+        setError('Payment was cancelled. You can try completing the purchase again.');
+    };
+
+    useEffect(() => {
+        if (pendingOrder && payReference === pendingOrder.orderNumber) {
+            initializePayment(onSuccess, onClose);
+        }
+    }, [pendingOrder, payReference]);
+
+    const handlePlaceOrder = async (e) => {
+        if (e) e.preventDefault();
+        setIsProcessing(true);
+        setError(null);
+
+        const orderData = {
+            items: (cart || []).map(item => ({
+                product: item?._id,
+                name: item?.name,
+                price: item?.price || 0,
+                quantity: item?.quantity || 1,
+                size: item?.selectedSize || 'M',
+                color: item?.selectedColor || 'Black',
+                waist: item?.selectedWaist || '',
+                image: item?.images?.[0] || item?.image || '/placeholder.png',
+                customNote: item?.customNote || ''
+            })),
+            shippingDetails: { 
+                ...formData, 
+                state: formData.deliveryMethod === 'pickup' ? 'N/A' : formData.location,
+                shippingFee: shipping 
+            },
+            subtotal,
+            totalServiceFees,
+            shipping,
+            total
+        };
+
+        try {
+            const result = await createOrder(orderData);
+            if (result.success && result.order) {
+                setPendingOrder(result.order);
+                setPayReference(result.order.orderNumber);
+            } else {
+                setError(result.message || "Failed to initiate order. Please try again.");
+                setIsProcessing(false);
+            }
+        } catch (err) {
+            console.error("Order save error:", err);
+            setError("Failed to initiate order due to network issue.");
+            setIsProcessing(false);
+        }
     };
 
 
@@ -244,10 +284,21 @@ export default function Checkout() {
                                     </div>
                                 ) : (
                                     <div className="relative group">
-                                        <PaystackButton
-                                            {...paystackConfig}
-                                            className="w-full py-5 bg-slate-900 text-white rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-200"
-                                        />
+                                        <button
+                                            type="button"
+                                            disabled={isProcessing}
+                                            onClick={handlePlaceOrder}
+                                            className="w-full py-5 bg-slate-900 text-white rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-200 disabled:opacity-50"
+                                        >
+                                            {isProcessing ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                "Complete Purchase"
+                                            )}
+                                        </button>
                                         <div className="absolute -bottom-12 left-0 w-full text-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Click once and wait for the secure window</p>
                                         </div>

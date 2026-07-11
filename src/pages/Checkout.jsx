@@ -36,17 +36,14 @@ export default function Checkout() {
     
     // Shipping locations configuration
     const deliveryLocations = [
-        { name: 'Lagos', fee: 4000 },
-        { name: 'Ogun', fee: 5000 },
-        { name: 'Oyo', fee: 5500 },
-        { name: 'Osun', fee: 6000 },
-        { name: 'Ondo', fee: 6000 },
-        { name: 'Ekiti', fee: 6000 },
-        { name: 'Other State (Mainland)', fee: 7000 },
-        { name: 'Abuja', fee: 7500 },
+        { name: 'Lagos', fee: 7000 },
+        { name: 'Babcock', fee: 6000 },
+        { name: 'Ibadan', fee: 4000 },
+        { name: 'Abuja', fee: 8000 },
         { name: 'Port Harcourt', fee: 7500 },
         { name: 'Eastern Region', fee: 8000 },
-        { name: 'Northern Region', fee: 8500 }
+        { name: 'Northern Region', fee: 8500 },
+        { name: 'Other States', fee: 7000 }
     ];
 
     const shipping = formData.deliveryMethod === 'pickup' 

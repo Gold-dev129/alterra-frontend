@@ -284,6 +284,15 @@ export default function Checkout() {
                                     </div>
                                 ) : (
                                     <div className="relative group">
+                                        <div className="p-4 mb-4 bg-amber-50 text-amber-800 rounded-2xl border border-amber-200 text-center">
+                                            <p className="text-[11px] font-bold uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+                                                <AlertCircle className="w-4 h-4" />
+                                                CRITICAL WARNING
+                                            </p>
+                                            <p className="text-[10px] font-medium leading-relaxed">
+                                                After payment, you <strong>MUST NOT CLOSE THE TAB</strong> or leave the browser until you see the "Order Confirmed" page, otherwise your order may be lost.
+                                            </p>
+                                        </div>
                                         <button
                                             type="button"
                                             disabled={isProcessing}
@@ -293,13 +302,13 @@ export default function Checkout() {
                                             {isProcessing ? (
                                                 <>
                                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                                    Processing...
+                                                    Processing... Please Do Not Close Tab
                                                 </>
                                             ) : (
                                                 "Complete Purchase"
                                             )}
                                         </button>
-                                        <div className="absolute -bottom-12 left-0 w-full text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute -bottom-8 left-0 w-full text-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Click once and wait for the secure window</p>
                                         </div>
                                     </div>

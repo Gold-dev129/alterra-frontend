@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,7 @@ export default function Checkout() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
     const [pendingOrder, setPendingOrder] = useState(null);
+    const pendingOrderRef = useRef(null);
     const [payReference, setPayReference] = useState(() => (new Date()).getTime().toString());
 
     const [formData, setFormData] = useState({
@@ -80,9 +81,27 @@ export default function Checkout() {
         console.log('--- !!! PAYMENT SUCCESS !!! ---', reference);
         setIsProcessing(false);
         const refStr = reference?.reference || reference?.trxref || 'REF_PROGRAMMATIC';
+        const activeOrder = pendingOrderRef.current || pendingOrder;
+
+        if (!activeOrder) {
+            console.error("No active pending order found in ref or state!");
+            localStorage.removeItem('alterra_cart');
+            try { clearCart(); } catch (e) { console.error(e); }
+            navigate('/order-confirmed', { 
+                state: { 
+                    order: {
+                        status: 'Paid',
+                        paymentReference: refStr,
+                        orderNumber: refStr,
+                        shippingDetails: { email: formData?.email || 'customer@example.com', firstName: formData?.firstName || 'Customer' }
+                    } 
+                } 
+            });
+            return;
+        }
 
         // Fire payment confirmation PATCH request to server in the background (do NOT await it)
-        fetch(`https://alterra-node.onrender.com/api/orders/${pendingOrder._id}/pay`, {
+        fetch(`https://alterra-node.onrender.com/api/orders/${activeOrder._id}/pay`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -99,7 +118,7 @@ export default function Checkout() {
         navigate('/order-confirmed', { 
             state: { 
                 order: {
-                    ...pendingOrder,
+                    ...activeOrder,
                     status: 'Paid',
                     paymentReference: refStr
                 } 
@@ -111,6 +130,7 @@ export default function Checkout() {
         console.log('--- Payment Modal Closed ---');
         setIsProcessing(false);
         setPendingOrder(null);
+        pendingOrderRef.current = null;
         setError('Payment was cancelled. You can try completing the purchase again.');
     };
 
@@ -152,6 +172,7 @@ export default function Checkout() {
         try {
             const result = await createOrder(orderData, token);
             if (result.success && result.order) {
+                pendingOrderRef.current = result.order;
                 setPendingOrder(result.order);
                 setPayReference(result.order.orderNumber);
             } else {

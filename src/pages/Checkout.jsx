@@ -9,7 +9,7 @@ import { usePaystackPayment } from 'react-paystack';
 export default function Checkout() {
     console.log('--- ALTERRA CHECKOUT VERSION 8.0 [ULTRA-RELIABILITY] ---', new Date().toLocaleTimeString());
     const { cart = [], clearCart, createOrder, removeFromCart, updateQuantity, updateCartItemAttributes } = useProducts();
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
@@ -77,31 +77,35 @@ export default function Checkout() {
 
     const initializePayment = usePaystackPayment(paystackConfig);
 
-    const onSuccess = async (reference) => {
+    const onSuccess = (reference) => {
         console.log('--- !!! PAYMENT SUCCESS !!! ---', reference);
-        setIsOrderSuccessful(true);
         setIsProcessing(false);
         const refStr = reference?.reference || reference?.trxref || 'REF_PROGRAMMATIC';
 
-        try {
-            const res = await fetch(`https://alterra-node.onrender.com/api/orders/${pendingOrder._id}/pay`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ paymentReference: refStr })
-            });
-            const data = await res.json();
-            
-            localStorage.removeItem('alterra_cart');
-            try { clearCart(); } catch (e) { console.error(e); }
-            navigate('/order-confirmed', { state: { order: data.data?.order || pendingOrder } });
-        } catch (err) {
-            console.error("Payment confirmation failed on client:", err);
-            localStorage.removeItem('alterra_cart');
-            try { clearCart(); } catch (e) { console.error(e); }
-            navigate('/order-confirmed', { state: { order: pendingOrder } });
-        }
+        // Fire payment confirmation PATCH request to server in the background (do NOT await it)
+        fetch(`https://alterra-node.onrender.com/api/orders/${pendingOrder._id}/pay`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ paymentReference: refStr })
+        }).catch(err => {
+            console.error("Background payment confirmation error:", err);
+        });
+
+        // Immediately clear cart and redirect user to order-confirmed page
+        localStorage.removeItem('alterra_cart');
+        try { clearCart(); } catch (e) { console.error(e); }
+        navigate('/order-confirmed', { 
+            state: { 
+                order: {
+                    ...pendingOrder,
+                    status: 'Paid',
+                    paymentReference: refStr
+                } 
+            } 
+        });
     };
 
     const onClose = () => {
@@ -146,7 +150,7 @@ export default function Checkout() {
         };
 
         try {
-            const result = await createOrder(orderData);
+            const result = await createOrder(orderData, token);
             if (result.success && result.order) {
                 setPendingOrder(result.order);
                 setPayReference(result.order.orderNumber);

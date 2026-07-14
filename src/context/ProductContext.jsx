@@ -219,13 +219,17 @@ export const ProductProvider = ({ children }) => {
     triggerToast(`Added ${product.name} to bag`);
   };
 
-  const createOrder = async (orderData) => {
+  const createOrder = async (orderData, token) => {
     try {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const response = await fetch('https://alterra-node.onrender.com/api/orders', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify(orderData)
       });
       const data = await response.json();

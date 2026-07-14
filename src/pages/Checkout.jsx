@@ -8,12 +8,11 @@ import { usePaystackPayment } from 'react-paystack';
 
 export default function Checkout() {
     console.log('--- ALTERRA CHECKOUT VERSION 8.0 [ULTRA-RELIABILITY] ---', new Date().toLocaleTimeString());
-    const { cart = [], clearCart, createOrder, removeFromCart, updateQuantity, updateCartItemAttributes } = useProducts();
+    const { cart = [], clearCart, createOrder, removeFromCart } = useProducts();
     const { user, token } = useAuth();
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
-    const [isOrderSuccessful, setIsOrderSuccessful] = useState(false);
     const [pendingOrder, setPendingOrder] = useState(null);
     const [payReference, setPayReference] = useState(() => (new Date()).getTime().toString());
 
@@ -119,6 +118,7 @@ export default function Checkout() {
         if (pendingOrder && payReference === pendingOrder.orderNumber) {
             initializePayment(onSuccess, onClose);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pendingOrder, payReference]);
 
     const handlePlaceOrder = async (e) => {
@@ -165,17 +165,6 @@ export default function Checkout() {
         }
     };
 
-
-    if (isOrderSuccessful) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-                <CheckCircle className="w-16 h-16 text-green-500 mb-6 animate-pulse" />
-                <h2 className="text-3xl font-serif italic text-slate-900 mb-2">Payment Successful!</h2>
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">Saving your order details, please do not close this page...</p>
-                <Loader2 className="w-6 h-6 animate-spin text-slate-900" />
-            </div>
-        );
-    }
 
     if (!cart || cart.length === 0) {
         return (

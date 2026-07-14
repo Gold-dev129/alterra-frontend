@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
 
@@ -11,19 +12,16 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('token'));
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (token) {
-            // Ideally should verify token with backend here
-            // For now, we'll assume valid if present and just store it
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) setUser(JSON.parse(storedUser));
+    const [token, setToken] = useState(() => localStorage.getItem('token'));
+    const [user, setUser] = useState(() => {
+        const storedUser = localStorage.getItem('user');
+        try {
+            return storedUser ? JSON.parse(storedUser) : null;
+        } catch {
+            return null;
         }
-        setLoading(false);
-    }, [token]);
+    });
+    const [loading] = useState(false);
 
     const login = async (email, password) => {
         try {
@@ -46,7 +44,7 @@ export const AuthProvider = ({ children }) => {
             } else {
                 return { success: false, message: data.message || 'Login failed' };
             }
-        } catch (error) {
+        } catch {
             return { success: false, message: 'Server error' };
         }
     };
@@ -74,7 +72,7 @@ export const AuthProvider = ({ children }) => {
             } else {
                 return { success: false, message: data.message || 'Signup failed' };
             }
-        } catch (error) {
+        } catch {
             return { success: false, message: 'Server error' };
         }
     };

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const ProductContext = createContext();
@@ -69,7 +70,7 @@ export const ProductProvider = ({ children }) => {
             setError(data.message || 'Failed to fetch products');
           }
         }
-      } catch (err) {
+      } catch {
         if (!localStorage.getItem('alterra_products_cache')) {
           setError('Server error while loading products');
         }
@@ -126,7 +127,7 @@ export const ProductProvider = ({ children }) => {
         return { success: true };
       }
       return { success: false, message: data.message };
-    } catch (err) {
+    } catch {
       return { success: false, message: 'Error adding product' };
     }
   };
@@ -148,7 +149,7 @@ export const ProductProvider = ({ children }) => {
         return { success: true };
       }
       return { success: false };
-    } catch (err) {
+    } catch {
       return { success: false };
     }
   };
@@ -172,7 +173,7 @@ export const ProductProvider = ({ children }) => {
         return { success: true };
       }
       return { success: false, message: data.message };
-    } catch (err) {
+    } catch {
       return { success: false, message: 'Error updating product' };
     }
   };
@@ -237,7 +238,7 @@ export const ProductProvider = ({ children }) => {
         return { success: true, order: data.data.order };
       }
       return { success: false, message: data.message };
-    } catch (err) {
+    } catch {
       return { success: false, message: 'Server error while placing order' };
     }
   };
@@ -330,7 +331,7 @@ export const ProductProvider = ({ children }) => {
         return { success: true };
       }
       return { success: false, message: data.message };
-    } catch (err) {
+    } catch {
       return { success: false, message: 'Error updating order status' };
     }
   };
@@ -351,7 +352,7 @@ export const ProductProvider = ({ children }) => {
         return { success: true };
       }
       return { success: false, message: data.message };
-    } catch (err) {
+    } catch {
       return { success: false, message: 'Error updating order fulfillment' };
     }
   };

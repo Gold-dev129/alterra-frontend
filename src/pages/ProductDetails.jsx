@@ -61,6 +61,7 @@ export default function ProductDetails() {
 
     useEffect(() => {
         if (product && availableColors.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSelectedColor(availableColors[0]);
         }
         if (product && product.waistOptions && product.waistOptions.length > 0) {

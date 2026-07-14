@@ -7,7 +7,7 @@ import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import CartItem from './CartItem';
 
 export default function ShoppingCart() {
-  const { cart, isCartOpen, setIsCartOpen, clearCart, cartTotal } = useProducts();
+  const { cart, isCartOpen, setIsCartOpen } = useProducts();
   const { user } = useAuth();
   const navigate = useNavigate();
 

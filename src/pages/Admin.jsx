@@ -72,7 +72,7 @@ export default function Admin() {
                 const parsed = JSON.parse(cached);
                 if (parsed.dashboard_header_url) return parsed.dashboard_header_url;
             }
-        } catch {}
+        } catch { /* ignore cache parse failure */ }
         return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop';
     });
 
@@ -101,7 +101,7 @@ export default function Admin() {
             try {
                 const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
                 audio.play().catch(e => console.log('Audio play failed:', e));
-            } catch (e) {}
+            } catch { /* ignore audio play error */ }
 
             // Trigger Browser Push Notification
             if ('Notification' in window && Notification.permission === 'granted') {
@@ -115,6 +115,7 @@ export default function Admin() {
         });
 
         return () => socket.disconnect();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     useEffect(() => {
@@ -154,7 +155,7 @@ export default function Admin() {
                 });
                 setStatus({ type: 'success', message: `${key.replace(/_/g, ' ')} updated successfully!` });
             }
-        } catch (err) {
+        } catch {
             setStatus({ type: 'error', message: 'Failed to update branding.' });
         } finally {
             setIsUpdatingBranding(false);
@@ -284,7 +285,7 @@ export default function Admin() {
                 } else {
                     setStatus({ type: 'error', message: 'Failed to clear orders' });
                 }
-            } catch (err) {
+            } catch {
                 setStatus({ type: 'error', message: 'Network error while clearing orders' });
             }
         }

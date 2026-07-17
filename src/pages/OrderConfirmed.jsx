@@ -1,17 +1,22 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, ShoppingBag } from 'lucide-react';
+import { useProducts } from '../context/ProductContext';
 
 export default function OrderConfirmed() {
     const location = useLocation();
     const navigate = useNavigate();
     const order = location.state?.order;
+    const { clearCart } = useProducts();
 
     useEffect(() => {
         if (!order) {
             navigate('/');
+        } else {
+            localStorage.removeItem('alterra_cart');
+            try { clearCart(); } catch (e) { console.error(e); }
         }
-    }, [order, navigate]);
+    }, [order, navigate, clearCart]);
 
     if (!order) return null;
 

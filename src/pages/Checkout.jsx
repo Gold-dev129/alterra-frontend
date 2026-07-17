@@ -8,7 +8,7 @@ import { usePaystackPayment } from 'react-paystack';
 
 export default function Checkout() {
     console.log('--- ALTERRA CHECKOUT VERSION 8.0 [ULTRA-RELIABILITY] ---', new Date().toLocaleTimeString());
-    const { cart = [], clearCart, createOrder, removeFromCart } = useProducts();
+    const { cart = [], createOrder, removeFromCart } = useProducts();
     const { user, token } = useAuth();
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
@@ -62,6 +62,13 @@ export default function Checkout() {
         }
     }, [user, formData.email]);
 
+    useEffect(() => {
+        // Pre-warm Render backend to prevent cold start delays during order creation
+        fetch('https://alterra-node.onrender.com/api/settings')
+            .then(() => console.log('Render backend pre-warmed successfully'))
+            .catch(err => console.warn('Render pre-warm failed:', err));
+    }, []);
+
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -85,8 +92,6 @@ export default function Checkout() {
 
         if (!activeOrder) {
             console.error("No active pending order found in ref or state!");
-            localStorage.removeItem('alterra_cart');
-            try { clearCart(); } catch (e) { console.error(e); }
             navigate('/order-confirmed', { 
                 state: { 
                     order: {
@@ -113,8 +118,6 @@ export default function Checkout() {
         });
 
         // Immediately clear cart and redirect user to order-confirmed page
-        localStorage.removeItem('alterra_cart');
-        try { clearCart(); } catch (e) { console.error(e); }
         navigate('/order-confirmed', { 
             state: { 
                 order: {

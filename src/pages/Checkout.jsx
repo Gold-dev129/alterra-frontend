@@ -15,6 +15,7 @@ export default function Checkout() {
     const [error, setError] = useState(null);
     const [pendingOrder, setPendingOrder] = useState(null);
     const pendingOrderRef = useRef(null);
+    const orderCreationErrorRef = useRef(null);
     const [payReference, setPayReference] = useState(() => (new Date()).getTime().toString());
 
     const [formData, setFormData] = useState({
@@ -84,49 +85,79 @@ export default function Checkout() {
 
     const initializePayment = usePaystackPayment(paystackConfig);
 
-    const onSuccess = (reference) => {
+    const onSuccess = async (reference) => {
         console.log('--- !!! PAYMENT SUCCESS !!! ---', reference);
-        setIsProcessing(false);
+        setIsProcessing(true);
         const refStr = reference?.reference || reference?.trxref || 'REF_PROGRAMMATIC';
-        const activeOrder = pendingOrderRef.current || pendingOrder;
 
-        if (!activeOrder) {
-            console.error("No active pending order found in ref or state!");
+        // Wait for up to 15 seconds for the background order creation to complete
+        let attempts = 0;
+        const maxAttempts = 30; // 30 * 500ms = 15 seconds
+        while (!pendingOrderRef.current && !orderCreationErrorRef.current && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            attempts++;
+        }
+
+        const activeOrder = pendingOrderRef.current;
+
+        if (activeOrder) {
+            // Fire payment confirmation PATCH request to server in the background (do NOT await it)
+            fetch(`https://alterra-node.onrender.com/api/orders/${activeOrder._id}/pay`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ paymentReference: refStr })
+            }).catch(err => {
+                console.error("Background payment confirmation error:", err);
+            });
+
+            // Redirect user to order-confirmed page
+            navigate('/order-confirmed', { 
+                state: { 
+                    order: {
+                        ...activeOrder,
+                        status: 'Paid',
+                        paymentReference: refStr
+                    } 
+                } 
+            });
+        } else {
+            console.error("Failed to find or create active order in time. Navigating with fallback.");
             navigate('/order-confirmed', { 
                 state: { 
                     order: {
                         status: 'Paid',
                         paymentReference: refStr,
                         orderNumber: refStr,
-                        shippingDetails: { email: formData?.email || 'customer@example.com', firstName: formData?.firstName || 'Customer' }
+                        shippingDetails: { 
+                            email: formData?.email || 'customer@example.com', 
+                            firstName: formData?.firstName || 'Customer',
+                            lastName: formData?.lastName || '',
+                            phone: formData?.phone || '',
+                            address: formData?.address || '',
+                            city: formData?.city || '',
+                            location: formData?.location || 'Lagos',
+                            deliveryMethod: formData?.deliveryMethod || 'delivery'
+                        },
+                        items: (cart || []).map(item => ({
+                            name: item?.name,
+                            price: item?.price || 0,
+                            quantity: item?.quantity || 1,
+                            size: item?.selectedSize || 'M',
+                            color: item?.selectedColor || 'Black',
+                            image: item?.images?.[0] || item?.image || '/placeholder.png'
+                        })),
+                        subtotal,
+                        totalServiceFees,
+                        shipping,
+                        total
                     } 
                 } 
             });
-            return;
         }
-
-        // Fire payment confirmation PATCH request to server in the background (do NOT await it)
-        fetch(`https://alterra-node.onrender.com/api/orders/${activeOrder._id}/pay`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify({ paymentReference: refStr })
-        }).catch(err => {
-            console.error("Background payment confirmation error:", err);
-        });
-
-        // Immediately clear cart and redirect user to order-confirmed page
-        navigate('/order-confirmed', { 
-            state: { 
-                order: {
-                    ...activeOrder,
-                    status: 'Paid',
-                    paymentReference: refStr
-                } 
-            } 
-        });
+        setIsProcessing(false);
     };
 
     const onClose = () => {
@@ -134,20 +165,16 @@ export default function Checkout() {
         setIsProcessing(false);
         setPendingOrder(null);
         pendingOrderRef.current = null;
+        orderCreationErrorRef.current = null;
+        setPayReference((new Date()).getTime().toString());
         setError('Payment was cancelled. You can try completing the purchase again.');
     };
-
-    useEffect(() => {
-        if (pendingOrder && payReference === pendingOrder.orderNumber) {
-            initializePayment(onSuccess, onClose);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pendingOrder, payReference]);
 
     const handlePlaceOrder = async (e) => {
         if (e) e.preventDefault();
         setIsProcessing(true);
         setError(null);
+        orderCreationErrorRef.current = null;
 
         const orderData = {
             items: (cart || []).map(item => ({
@@ -172,21 +199,28 @@ export default function Checkout() {
             total
         };
 
-        try {
-            const result = await createOrder(orderData, token);
-            if (result.success && result.order) {
-                pendingOrderRef.current = result.order;
-                setPendingOrder(result.order);
-                setPayReference(result.order.orderNumber);
-            } else {
-                setError(result.message || "Failed to initiate order. Please try again.");
-                setIsProcessing(false);
+        // Start order creation in the background immediately
+        const createOrderInBackground = async () => {
+            try {
+                const result = await createOrder(orderData, token);
+                if (result.success && result.order) {
+                    pendingOrderRef.current = result.order;
+                    setPendingOrder(result.order);
+                    console.log("Background order created successfully:", result.order);
+                } else {
+                    orderCreationErrorRef.current = result.message || "Failed to create order on server";
+                    console.error("Background order creation failed:", result.message);
+                }
+            } catch (err) {
+                orderCreationErrorRef.current = "Network error during background order creation";
+                console.error("Background order creation error:", err);
             }
-        } catch (err) {
-            console.error("Order save error:", err);
-            setError("Failed to initiate order due to network issue.");
-            setIsProcessing(false);
-        }
+        };
+
+        createOrderInBackground();
+
+        // Immediately launch the payment gateway modal
+        initializePayment(onSuccess, onClose);
     };
 
 

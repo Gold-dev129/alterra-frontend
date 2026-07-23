@@ -2,12 +2,14 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, ShoppingBag } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function OrderConfirmed() {
     const location = useLocation();
     const navigate = useNavigate();
     const order = location.state?.order;
     const { clearCart } = useProducts();
+    const { user } = useAuth();
 
     useEffect(() => {
         if (!order) {
@@ -73,7 +75,7 @@ export default function OrderConfirmed() {
                     </div>
 
                     <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to="/orders" className="px-8 py-4 bg-slate-100 text-slate-900 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all">
+                        <Link to={user ? "/my-orders" : "/login"} className="px-8 py-4 bg-slate-100 text-slate-900 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all">
                             View Order History
                         </Link>
                         <Link to="/" className="px-8 py-4 bg-slate-900 text-white font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-800 transition-all">

@@ -16,7 +16,7 @@ export default function Checkout() {
     const [pendingOrder, setPendingOrder] = useState(null);
     const pendingOrderRef = useRef(null);
     const orderCreationErrorRef = useRef(null);
-    const [payReference, setPayReference] = useState(() => (new Date()).getTime().toString());
+    const [payReference, setPayReference] = useState(() => 'ALT-' + Math.floor(100000 + Math.random() * 900000));
 
     const [formData, setFormData] = useState({
         email: user?.email || '',
@@ -166,7 +166,7 @@ export default function Checkout() {
         setPendingOrder(null);
         pendingOrderRef.current = null;
         orderCreationErrorRef.current = null;
-        setPayReference((new Date()).getTime().toString());
+        setPayReference('ALT-' + Math.floor(100000 + Math.random() * 900000));
         setError('Payment was cancelled. You can try completing the purchase again.');
     };
 
@@ -196,7 +196,8 @@ export default function Checkout() {
             subtotal,
             totalServiceFees,
             shipping,
-            total
+            total,
+            orderNumber: payReference
         };
 
         // Start order creation in the background immediately
@@ -220,7 +221,7 @@ export default function Checkout() {
         createOrderInBackground();
 
         // Immediately launch the payment gateway modal
-        initializePayment(onSuccess, onClose);
+        initializePayment({ onSuccess, onClose });
     };
 
 

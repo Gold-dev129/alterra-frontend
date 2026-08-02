@@ -7,7 +7,7 @@ import { ShoppingBag, ArrowLeft, Hexagon, Loader2, Minus, Plus, ChevronLeft, Che
 export default function ProductDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { products, addToCart, loading } = useProducts();
+    const { products, addToCart, loading, setIsCartOpen } = useProducts();
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIdx, setSelectedImageIdx] = useState(0);
     const [selectedSize, setSelectedSize] = useState('M');
@@ -56,6 +56,7 @@ export default function ProductDetails() {
                 height: selectedHeight
             });
         }
+        setIsCartOpen(false);
         navigate('/checkout');
     };
 

@@ -59,7 +59,7 @@ export const ProductProvider = ({ children }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('https://alterra-node.onrender.com/api/products');
+        const response = await fetch(`https://alterra-node.onrender.com/api/products?t=${Date.now()}`);
         const data = await response.json();
         if (response.ok && data.data && Array.isArray(data.data.products)) {
           const sorted = [...data.data.products].sort((a, b) => b._id.localeCompare(a._id));
@@ -81,7 +81,7 @@ export const ProductProvider = ({ children }) => {
 
     const fetchSettings = async () => {
       try {
-        const response = await fetch('https://alterra-node.onrender.com/api/settings');
+        const response = await fetch(`https://alterra-node.onrender.com/api/settings?t=${Date.now()}`);
         const data = await response.json();
         if (response.ok && data.data) {
           setSettings(data.data);

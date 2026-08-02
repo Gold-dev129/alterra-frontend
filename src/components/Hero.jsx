@@ -42,7 +42,7 @@ export default function Hero() {
             <div className="relative z-20 flex flex-col items-center gap-3">
                 <div className="flex items-center gap-6 bg-black/40 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/10 shadow-lg font-sans">
                     <a 
-                        href="https://snapchat.com/t/Gh7wXpDR" 
+                        href="https://snapchat.com/t/ULVErLNp" 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="text-white/60 hover:text-white transition-all transform hover:scale-110 text-xs font-bold uppercase tracking-wider px-1"

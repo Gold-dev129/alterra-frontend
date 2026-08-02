@@ -143,7 +143,7 @@ export default function ProductDetails() {
         <div className="min-h-screen pt-32 pb-24 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/products')}
                     className="mb-12 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" /> Back to Collection

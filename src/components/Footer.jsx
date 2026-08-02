@@ -1,9 +1,15 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Music, Ghost } from 'lucide-react';
 
 export default function Footer() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  if (location.pathname === '/') {
+    return null;
+  }
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

@@ -26,19 +26,8 @@ export default function ProductListing() {
   }
 
   return (
-    <section id="collection" className="py-32 bg-white">
+    <section id="collection" className="pt-12 pb-24 bg-white">
       <div className="container-custom">
-        <div className="flex flex-col items-center justify-center mb-24 text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-4xl sm:text-6xl font-serif text-slate-900 leading-tight uppercase tracking-[0.2em]"
-          >
-            ALTERRA BROKEN SIGNALS COLLECTION
-          </motion.h2>
-          <div className="w-24 h-px bg-slate-200 mt-8" />
-        </div>
 
         <div className="grid grid-cols-2 gap-x-4 sm:gap-x-10 gap-y-10 sm:gap-y-20">
           {sortedProducts.map((product, index) => (

@@ -15,8 +15,49 @@ export default function ProductDetails() {
     const [selectedWaist, setSelectedWaist] = useState('');
     const [customNote, setCustomNote] = useState('');
     const [showSizeChart, setShowSizeChart] = useState(false);
+    const [selectedHeight, setSelectedHeight] = useState('');
+    const [heightError, setHeightError] = useState(false);
 
     const product = products.find(p => p._id === id);
+
+    const isPant = product ? (product.isPant || product.description?.includes('[isPant]') || product.description?.includes('[type:pant]') || product.name?.toLowerCase().includes('pant') || product.name?.toLowerCase().includes('trouser')) : false;
+
+    const handleAddToCart = () => {
+        if (isPant && !selectedHeight.trim()) {
+            setHeightError(true);
+            window.alert('Please enter your height before adding to bag.');
+            return;
+        }
+        setHeightError(false);
+        for (let i = 0; i < quantity; i++) {
+            addToCart(product, {
+                size: selectedSize,
+                color: selectedColor,
+                waist: selectedWaist,
+                customNote: customNote,
+                height: selectedHeight
+            });
+        }
+    };
+
+    const handleBuyNow = () => {
+        if (isPant && !selectedHeight.trim()) {
+            setHeightError(true);
+            window.alert('Please enter your height before buying.');
+            return;
+        }
+        setHeightError(false);
+        for (let i = 0; i < quantity; i++) {
+            addToCart(product, {
+                size: selectedSize,
+                color: selectedColor,
+                waist: selectedWaist,
+                customNote: customNote,
+                height: selectedHeight
+            });
+        }
+        navigate('/checkout');
+    };
 
     const sizeChartData = product?.sizeChart && product.sizeChart.length > 0 ? product.sizeChart : [
         { label: 'Small (S)', chest: '36', waist: '30', length: '26.5', sleeve: '22.5' },
@@ -54,7 +95,7 @@ export default function ProductDetails() {
     };
 
     // Default sizes for selection
-    const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    const sizes = ['S', 'M', 'L', 'XL', 'XXL', '3XL'];
     // Default colors if product doesn't have any
     const defaultColors = ['Black', 'White'];
     const availableColors = (product?.colors && product.colors.length > 0) ? product.colors : defaultColors;
@@ -114,10 +155,10 @@ export default function ProductDetails() {
                         animate={{ opacity: 1, x: 0 }}
                         className="lg:col-span-7 space-y-6"
                     >
-                        <div className="bg-slate-50 rounded-[2rem] overflow-hidden aspect-[4/5] relative group shadow-sm">
+                        <div className="bg-transparent overflow-hidden aspect-[4/5] relative group">
                             {product.isSoldOut && (
                                 <span className="absolute top-6 left-6 bg-red-600 text-white text-[11px] font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-md z-10">
-                                    SOLD OUT
+                                    OUT OF STOCK
                                 </span>
                             )}
                             <AnimatePresence mode="wait">
@@ -153,7 +194,7 @@ export default function ProductDetails() {
                                     <button
                                         key={i}
                                         onClick={() => setSelectedImageIdx(i)}
-                                        className={`aspect-[3/4] rounded-2xl bg-slate-50 border-2 cursor-pointer transition-all overflow-hidden ${selectedImageIdx === i ? 'border-slate-900' : 'border-transparent hover:border-slate-200'}`}
+                                        className={`aspect-[3/4] rounded-2xl bg-transparent border-2 cursor-pointer transition-all overflow-hidden ${selectedImageIdx === i ? 'border-slate-900' : 'border-transparent hover:border-slate-200'}`}
                                     >
                                         <img src={img} alt="" className="w-full h-full object-cover" />
                                     </button>
@@ -180,9 +221,9 @@ export default function ProductDetails() {
                                         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Select Size</p>
                                         <button 
                                             onClick={() => setShowSizeChart(true)}
-                                            className="text-[10px] font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-0.5 hover:text-slate-500 hover:border-slate-500 transition-all"
+                                            className="text-[10px] font-bold uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-0.5 hover:text-slate-500 hover:border-slate-500 transition-all text-right"
                                         >
-                                            View Size Guide
+                                            Size Guide for {product.name}
                                         </button>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
@@ -240,6 +281,34 @@ export default function ProductDetails() {
                                     </div>
                                 )}
 
+                                {/* Height Selection for Pants */}
+                                {isPant && (
+                                    <div className="space-y-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                                            What is your height? <span className="text-red-500">*</span>
+                                        </p>
+                                        <input
+                                            type="text"
+                                            value={selectedHeight}
+                                            onChange={(e) => {
+                                                setSelectedHeight(e.target.value);
+                                                if (e.target.value.trim()) setHeightError(false);
+                                            }}
+                                            placeholder="e.g. 5ft 9in, 180cm, 6ft"
+                                            className={`input-standard py-4 text-sm rounded-2xl w-full transition-colors ${
+                                                heightError 
+                                                    ? 'bg-red-50 border-red-300 focus:bg-white' 
+                                                    : 'bg-slate-50 border-transparent focus:bg-white'
+                                            }`}
+                                        />
+                                        {heightError && (
+                                            <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider">
+                                                Height is required for pants
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Custom Note */}
                                 <div className="space-y-3">
                                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Custom Notes (Optional)</p>
@@ -260,7 +329,7 @@ export default function ProductDetails() {
 
                         <div className="prose prose-slate max-w-none">
                             <p className="text-slate-500 leading-relaxed text-lg italic">
-                                "{product.description}"
+                                "{(product.description || '').replace(/\[isPant\]/g, '').replace(/\[type:pant\]/g, '').trim()}"
                             </p>
                         </div>
 
@@ -278,45 +347,45 @@ export default function ProductDetails() {
                                 {product.isSoldOut ? (
                                     <button
                                         disabled
-                                        className="w-full bg-red-650 bg-red-600 text-white rounded-full h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm font-black shadow-xl"
+                                        className="w-full bg-red-600 text-white rounded-full h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm font-black shadow-xl"
                                     >
-                                        SOLD OUT
+                                        OUT OF STOCK
                                     </button>
                                 ) : (
-                                    <>
-                                        <div className="flex items-center border-2 border-slate-100 rounded-2xl p-2 h-16 bg-slate-50/30">
+                                    <div className="flex flex-col gap-4 w-full">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center border-2 border-slate-100 rounded-2xl p-2 h-16 bg-slate-50/30 shrink-0">
+                                                <button
+                                                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                                                    className="w-12 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
+                                                >
+                                                    <Minus className="w-5 h-5" />
+                                                </button>
+                                                <span className="w-12 text-center text-lg font-bold text-slate-900">{quantity}</span>
+                                                <button
+                                                    onClick={() => setQuantity(q => q + 1)}
+                                                    className="w-12 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
+                                                >
+                                                    <Plus className="w-5 h-5" />
+                                                </button>
+                                            </div>
+
                                             <button
-                                                onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                                className="w-12 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
+                                                onClick={handleAddToCart}
+                                                className="flex-grow btn-premium h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm shadow-xl shadow-slate-200"
                                             >
-                                                <Minus className="w-5 h-5" />
-                                            </button>
-                                            <span className="w-12 text-center text-lg font-bold text-slate-900">{quantity}</span>
-                                            <button
-                                                onClick={() => setQuantity(q => q + 1)}
-                                                className="w-12 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors"
-                                            >
-                                                <Plus className="w-5 h-5" />
+                                                <ShoppingBag className="w-5 h-5" />
+                                                Add to Bag
                                             </button>
                                         </div>
 
                                         <button
-                                            onClick={() => {
-                                                for (let i = 0; i < quantity; i++) {
-                                                    addToCart(product, {
-                                                        size: selectedSize,
-                                                        color: selectedColor,
-                                                        waist: selectedWaist,
-                                                        customNote: customNote
-                                                    });
-                                                }
-                                            }}
-                                            className="flex-grow btn-premium h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm shadow-xl shadow-slate-200"
+                                            onClick={handleBuyNow}
+                                            className="w-full bg-slate-900 text-white rounded-2xl h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm font-black shadow-xl hover:bg-slate-800 transition-colors"
                                         >
-                                            <ShoppingBag className="w-5 h-5" />
-                                            Add to Bag
+                                            ⚡ Buy Now
                                         </button>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -353,7 +422,7 @@ export default function ProductDetails() {
                             className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100"
                         >
                             <div className="bg-slate-900 p-8 text-white relative">
-                                <h3 className="text-3xl font-serif italic font-bold">Shirt Size Guide</h3>
+                                <h3 className="text-3xl font-serif italic font-bold">Size Guide for {product.name}</h3>
                                 <button 
                                     onClick={() => setShowSizeChart(false)}
                                     className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all text-white font-bold"

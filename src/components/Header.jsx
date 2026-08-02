@@ -55,7 +55,7 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 flex-grow justify-center">
-            <Link to="/" className={`text-xs font-bold transition-colors uppercase tracking-[0.2em] ${headerNavClass}`}>Collection</Link>
+            <Link to="/products" className={`text-xs font-bold transition-colors uppercase tracking-[0.2em] ${headerNavClass}`}>Collection</Link>
             {isAdmin && (
               <Link to="/admin" className={`text-xs font-bold transition-colors uppercase tracking-[0.2em] flex items-center gap-1 ${headerNavClass}`}>
                 <Settings className="w-4 h-4" /> Dashboard
@@ -161,7 +161,7 @@ export default function Header() {
           >
             <div className="px-4 py-8 space-y-6 flex flex-col items-center text-center">
               <Link
-                to="/"
+                to="/products"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-xl font-serif font-medium text-slate-900"
               >

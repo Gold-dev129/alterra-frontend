@@ -32,7 +32,7 @@ export default function ProductCard({ product, index }) {
       className="group cursor-pointer"
       onClick={() => navigate(`/product/${product._id}`)}
     >
-      <div className="relative aspect-[3/4] overflow-hidden bg-slate-100 rounded-2xl mb-3 sm:mb-6">
+      <div className="relative aspect-[3/4] overflow-hidden mb-3 sm:mb-6">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIdx}
@@ -85,7 +85,7 @@ export default function ProductCard({ product, index }) {
         {/* Badge */}
         {product.isSoldOut ? (
           <span className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm z-20">
-            SOLD OUT
+            OUT OF STOCK
           </span>
         ) : product.isNewIn ? (
           <span className="absolute top-4 left-4 bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">

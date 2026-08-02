@@ -48,12 +48,15 @@ export default function OrderConfirmed() {
                                     </div>
                                     <div className="flex-grow">
                                         <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
-                                        <p className="text-xs text-slate-500 mb-1">{item.size} / {item.color}</p>
+                                        <p className="text-xs text-slate-500 mb-1">
+                                            {item.size} / {item.color}
+                                            {item.waist ? ` / ${item.waist} Waist` : ''}
+                                            {item.height ? ` / Height: ${item.height}` : ''}
+                                        </p>
                                         <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
                                     </div>
-                                    <div className="text-right flex flex-col justify-between">
-                                        <span className="font-bold text-slate-900">₦{((item.price + (item.serviceFee || 1000)) * item.quantity).toLocaleString()}</span>
-                                        <span className="text-[10px] text-amber-600 font-bold tracking-tight">Inc. ₦1,000 fee</span>
+                                    <div className="text-right flex flex-col justify-center">
+                                        <span className="font-bold text-slate-900">₦{(item.price * item.quantity).toLocaleString()}</span>
                                     </div>
                                 </div>
                             ))}

@@ -1,9 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import heroBg from '../assets/hero-bg.jpg';
 import { useProducts } from '../context/ProductContext';
 
 export default function Hero() {
+    const navigate = useNavigate();
     const { settings } = useProducts();
     const bgImage = settings?.dashboard_header_url || heroBg;
 
@@ -25,7 +27,7 @@ export default function Hero() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
-                    onClick={() => document.getElementById('collection').scrollIntoView({ behavior: 'smooth' })}
+                    onClick={() => navigate('/products')}
                     className="group relative overflow-hidden px-12 py-5 bg-white text-black font-bold tracking-[0.2em] uppercase transition-all duration-500 hover:bg-black hover:text-white"
                 >
                     <span className="relative z-10">SHOP NOW</span>

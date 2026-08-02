@@ -1,10 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Music, Ghost } from 'lucide-react';
 
 export default function Footer() {
+  const navigate = useNavigate();
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavToProducts = () => {
+    navigate('/products');
+    scrollToTop();
   };
 
   return (
@@ -40,10 +46,10 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-bold uppercase tracking-wider text-xs mb-8">Shop Selection</h4>
             <ul className="space-y-4">
-              <li><button onClick={scrollToTop} className="text-slate-400 hover:text-white text-sm transition-colors">All Products</button></li>
-              <li><button onClick={scrollToTop} className="text-slate-400 hover:text-white text-sm transition-colors">New Arrivals</button></li>
-              <li><button onClick={scrollToTop} className="text-slate-400 hover:text-white text-sm transition-colors">Bestsellers</button></li>
-              <li><button onClick={scrollToTop} className="text-slate-400 hover:text-white text-sm transition-colors">Exclusive Collections</button></li>
+              <li><button onClick={handleNavToProducts} className="text-slate-400 hover:text-white text-sm transition-colors">All Products</button></li>
+              <li><button onClick={handleNavToProducts} className="text-slate-400 hover:text-white text-sm transition-colors">New Arrivals</button></li>
+              <li><button onClick={handleNavToProducts} className="text-slate-400 hover:text-white text-sm transition-colors">Bestsellers</button></li>
+              <li><button onClick={handleNavToProducts} className="text-slate-400 hover:text-white text-sm transition-colors">Exclusive Collections</button></li>
             </ul>
           </div>
 

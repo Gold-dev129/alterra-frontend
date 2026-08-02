@@ -7,6 +7,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ShoppingCart from './components/ShoppingCart';
 import Footer from './components/Footer';
 import Home from './pages/Home';
+import Products from './pages/Products';
 import Admin from './pages/Admin';
 import ProductDetails from './pages/ProductDetails';
 import Login from './pages/Login';
@@ -96,6 +97,7 @@ function App() {
             <main className="flex-grow">
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/products" element={<Products />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/checkout" element={<Checkout />} />

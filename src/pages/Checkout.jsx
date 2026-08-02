@@ -32,24 +32,20 @@ export default function Checkout() {
     });
 
     const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);
-    const SERVICE_FEE = 1000;
-    const totalServiceFees = (cart || []).reduce((acc, item) => acc + (SERVICE_FEE * (item?.quantity || 0)), 0);
+    const totalQuantity = (cart || []).reduce((acc, item) => acc + (item?.quantity || 0), 0);
+    const totalServiceFees = totalQuantity === 0 ? 0 : (totalQuantity >= 3 ? 2000 : 1000);
     
     // Shipping locations configuration
     const deliveryLocations = [
         { name: 'Lagos', fee: 7000 },
-        { name: 'Babcock', fee: 6000 },
-        { name: 'Ibadan', fee: 4000 },
+        { name: 'Ibadan', fee: 7000 },
         { name: 'Abuja', fee: 8000 },
-        { name: 'Port Harcourt', fee: 7500 },
-        { name: 'Eastern Region', fee: 8000 },
-        { name: 'Northern Region', fee: 8500 },
-        { name: 'Other States', fee: 7000 }
+        { name: 'Other States', fee: 8000 }
     ];
 
     const shipping = formData.deliveryMethod === 'pickup' 
         ? 0 
-        : (deliveryLocations.find(l => l.name === formData.location)?.fee || 4000);
+        : (deliveryLocations.find(l => l.name === formData.location)?.fee || 7000);
     const total = subtotal + totalServiceFees + shipping;
 
     useEffect(() => {
@@ -177,17 +173,24 @@ export default function Checkout() {
         orderCreationErrorRef.current = null;
 
         const orderData = {
-            items: (cart || []).map(item => ({
-                product: item?._id,
-                name: item?.name,
-                price: item?.price || 0,
-                quantity: item?.quantity || 1,
-                size: item?.selectedSize || 'M',
-                color: item?.selectedColor || 'Black',
-                waist: item?.selectedWaist || '',
-                image: item?.images?.[0] || item?.image || '/placeholder.png',
-                customNote: item?.customNote || ''
-            })),
+            items: (cart || []).map(item => {
+                const heightPrefix = item?.selectedHeight ? `Height: ${item.selectedHeight}` : '';
+                const finalCustomNote = heightPrefix 
+                    ? (item.customNote ? `${heightPrefix} | ${item.customNote}` : heightPrefix)
+                    : (item.customNote || '');
+                return {
+                    product: item?._id,
+                    name: item?.name,
+                    price: item?.price || 0,
+                    quantity: item?.quantity || 1,
+                    size: item?.selectedSize || 'M',
+                    color: item?.selectedColor || 'Black',
+                    waist: item?.selectedWaist || '',
+                    image: item?.images?.[0] || item?.image || '/placeholder.png',
+                    customNote: finalCustomNote,
+                    height: item?.selectedHeight || ''
+                };
+            }),
             shippingDetails: { 
                 ...formData, 
                 state: formData.deliveryMethod === 'pickup' ? 'N/A' : formData.location,
@@ -413,11 +416,11 @@ export default function Checkout() {
                                                 <span className="text-[8px] font-bold bg-white border px-1.5 py-0.5 rounded text-slate-400 uppercase">{item?.selectedSize || 'N/A'}</span>
                                                 <span className="text-[8px] font-bold bg-white border px-1.5 py-0.5 rounded text-slate-400 uppercase">{item?.selectedColor || 'N/A'}</span>
                                                 {item?.selectedWaist && <span className="text-[8px] font-bold bg-white border px-1.5 py-0.5 rounded text-slate-400 uppercase">{item.selectedWaist} Waist</span>}
+                                                {item?.selectedHeight && <span className="text-[8px] font-bold bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded text-amber-600 uppercase">H: {item.selectedHeight}</span>}
                                             </div>
                                             <div className="flex justify-between items-end">
                                                 <span className="text-[10px] font-bold text-slate-400">Qty: {item?.quantity || 1}</span>
-                                                <span className="text-[10px] font-bold text-amber-600">+₦{(1000 * (item?.quantity || 1)).toLocaleString()} fee</span>
-                                                <span className="text-xs font-bold text-slate-900">₦{(((item?.price || 0) + 1000) * (item?.quantity || 1)).toLocaleString()}</span>
+                                                <span className="text-xs font-bold text-slate-900">₦{((item?.price || 0) * (item?.quantity || 1)).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>

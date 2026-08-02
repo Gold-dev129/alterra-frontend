@@ -24,7 +24,8 @@ export default function Admin() {
     });
     const [isUpdatingBranding, setIsUpdatingBranding] = useState(false);
     const [orderSearchQuery, setOrderSearchQuery] = useState('');
-    const [fulfillmentFilter, setFulfillmentFilter] = useState('All');
+    const [fulfillmentFilter, setFulfillmentFilter] = useState('Unfulfilled');
+    const [isSortedView, setIsSortedView] = useState(false);
     const [tempSearchVal, setTempSearchVal] = useState('');
     const [status, setStatus] = useState({ type: '', message: '' });
     const [newOrderAlert, setNewOrderAlert] = useState(null);
@@ -35,6 +36,7 @@ export default function Admin() {
         stock: '10',
         isNewIn: false,
         isSoldOut: false,
+        isPant: false,
         colors: '',
         waistOptions: []
     });
@@ -173,13 +175,18 @@ export default function Admin() {
 
     const handleEdit = (product) => {
         setEditId(product._id);
+        const cleanDescription = (product.description || '')
+            .replace(/\[isPant\]/g, '')
+            .replace(/\[type:pant\]/g, '')
+            .trim();
         setFormData({
             name: product.name || '',
             price: product.price || '',
-            description: product.description || '',
+            description: cleanDescription,
             stock: product.stock || '10',
             isNewIn: product.isNewIn || false,
             isSoldOut: product.isSoldOut || false,
+            isPant: product.isPant || product.description?.includes('[isPant]') || product.description?.includes('[type:pant]') || false,
             colors: (product.colors || []).join(', '),
             waistOptions: product.waistOptions || []
         });
@@ -211,7 +218,7 @@ export default function Admin() {
 
     const handleCancelEdit = () => {
         setEditId(null);
-        setFormData({ name: '', price: '', description: '', stock: '10', isNewIn: false, isSoldOut: false, colors: '', waistOptions: [] });
+        setFormData({ name: '', price: '', description: '', stock: '10', isNewIn: false, isSoldOut: false, isPant: false, colors: '', waistOptions: [] });
         setSizeChart([
             { label: 'S', chest: '', waist: '', length: '', sleeve: '' },
             { label: 'M', chest: '', waist: '', length: '', sleeve: '' },
@@ -228,13 +235,23 @@ export default function Admin() {
         setIsSubmitting(true);
         setStatus({ type: '', message: '' });
 
+        let finalDescription = formData.description || '';
+        if (formData.isPant) {
+            if (!finalDescription.includes('[isPant]')) {
+                finalDescription = `${finalDescription.trim()} [isPant]`;
+            }
+        } else {
+            finalDescription = finalDescription.replace(/\[isPant\]/g, '').replace(/\[type:pant\]/g, '').trim();
+        }
+
         const data = new FormData();
         data.append('name', formData.name);
         data.append('price', formData.price);
-        data.append('description', formData.description);
+        data.append('description', finalDescription);
         data.append('stock', formData.stock);
         data.append('isNewIn', formData.isNewIn);
         data.append('isSoldOut', formData.isSoldOut);
+        data.append('isPant', formData.isPant ? 'true' : 'false');
         data.append('colors', formData.colors);
         data.append('waistOptions', JSON.stringify(formData.waistOptions));
         data.append('sizeChart', JSON.stringify(sizeChart));
@@ -521,7 +538,7 @@ export default function Admin() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                             <div
                                                 className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white transition-colors"
                                                 onClick={() => setFormData({ ...formData, isNewIn: !formData.isNewIn })}
@@ -540,6 +557,16 @@ export default function Admin() {
                                                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.isSoldOut ? 'left-5' : 'left-1'}`} />
                                                 </div>
                                                 <span className="text-sm font-bold text-slate-900">Mark "Sold Out"</span>
+                                            </div>
+
+                                            <div
+                                                className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white transition-colors"
+                                                onClick={() => setFormData({ ...formData, isPant: !formData.isPant })}
+                                            >
+                                                <div className={`w-10 h-6 rounded-full transition-colors relative ${formData.isPant ? 'bg-slate-900' : 'bg-slate-200'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.isPant ? 'left-5' : 'left-1'}`} />
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-900">Mark as Pant</span>
                                             </div>
                                         </div>
 
@@ -723,28 +750,136 @@ export default function Admin() {
                                     )}
                                 </form>
 
-                                {/* Fulfillment Filter Tabs */}
-                                <div className="flex gap-2 border-b border-slate-100 pb-2">
-                                    {['All', 'Unfulfilled', 'Fulfilled'].map(filter => (
-                                        <button
-                                            key={filter}
-                                            type="button"
-                                            onClick={() => setFulfillmentFilter(filter)}
-                                            className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
-                                                fulfillmentFilter === filter 
-                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
-                                                    : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
-                                            }`}
-                                        >
-                                            {filter}
-                                        </button>
-                                    ))}
+                                {/* Fulfillment Filter Tabs & Sort Orders */}
+                                <div className="flex flex-wrap gap-4 items-center justify-between border-b border-slate-100 pb-2">
+                                    <div className="flex gap-2">
+                                        {[
+                                            { value: 'Unfulfilled', label: 'Orders' },
+                                            { value: 'Fulfilled', label: 'Fulfilled Orders' }
+                                        ].map(tab => (
+                                            <button
+                                                key={tab.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setFulfillmentFilter(tab.value);
+                                                    setIsSortedView(false);
+                                                }}
+                                                className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                                                    fulfillmentFilter === tab.value && !isSortedView
+                                                        ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                                                        : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'
+                                                }`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsSortedView(!isSortedView);
+                                            if (!isSortedView) {
+                                                setFulfillmentFilter('Unfulfilled');
+                                            }
+                                        }}
+                                        className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
+                                            isSortedView
+                                                ? 'bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-100'
+                                                : 'bg-white text-amber-600 border-amber-100 hover:border-amber-300'
+                                        }`}
+                                    >
+                                        📋 {isSortedView ? 'Show Full Orders' : 'Sort Orders'}
+                                    </button>
                                 </div>
 
                                 <div className="space-y-4">
                                     {loading ? (
                                         <div className="py-20 flex justify-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100"><Loader2 className="w-8 h-8 animate-spin text-slate-200" /></div>
                                     ) : (() => {
+                                        if (isSortedView) {
+                                            const unfulfilledOrders = orders.filter(order => order.isFulfilled !== true);
+                                            const itemsToProduce = [];
+                                            unfulfilledOrders.forEach(order => {
+                                                if (order.items && Array.isArray(order.items)) {
+                                                    order.items.forEach(item => {
+                                                        const heightFromNote = item.customNote?.match(/Height:\s*([^|]+)/)?.[1]?.trim() || '';
+                                                        itemsToProduce.push({
+                                                            ...item,
+                                                            orderId: order._id,
+                                                            orderNumber: order.orderNumber,
+                                                            customerName: `${order.shippingDetails?.firstName || ''} ${order.shippingDetails?.lastName || ''}`.trim(),
+                                                            height: item.height || heightFromNote || ''
+                                                        });
+                                                    });
+                                                }
+                                            });
+
+                                            if (itemsToProduce.length === 0) {
+                                                return (
+                                                    <div className="py-20 text-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+                                                        <ShoppingBag className="w-12 h-12 text-slate-100 mx-auto mb-4" />
+                                                        <p className="italic text-slate-400">No items to sort. All orders are fulfilled!</p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            return (
+                                                <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm p-6 sm:p-8 space-y-6">
+                                                    <div className="border-b border-slate-100 pb-4">
+                                                        <h3 className="text-lg font-serif italic font-bold text-slate-900">Unfulfilled Production & Pack List</h3>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Quickly view sizes, colors, heights, and fulfill directly</p>
+                                                    </div>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-left border-collapse">
+                                                            <thead>
+                                                                <tr className="border-b border-slate-200">
+                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Product Name</th>
+                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Size</th>
+                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Color</th>
+                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Height</th>
+                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Qty</th>
+                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Order Ref</th>
+                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="text-sm">
+                                                                {itemsToProduce.map((item, idx) => (
+                                                                    <tr key={idx} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                                        <td className="py-4 font-bold text-slate-900">{item.name}</td>
+                                                                        <td className="py-4 text-center">
+                                                                            <span className="px-2 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded uppercase">{item.size}</span>
+                                                                        </td>
+                                                                        <td className="py-4 text-center">
+                                                                            <span className="text-xs font-semibold text-slate-600">{item.color}</span>
+                                                                        </td>
+                                                                        <td className="py-4 text-center">
+                                                                            {item.height ? (
+                                                                                <span className="px-2 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-black rounded uppercase">{item.height}</span>
+                                                                            ) : <span className="text-slate-300 font-serif italic text-xs">--</span>}
+                                                                        </td>
+                                                                        <td className="py-4 text-center font-bold text-slate-900">{item.quantity}</td>
+                                                                        <td className="py-4">
+                                                                            <div className="text-[10px] font-bold text-slate-500 font-mono">{item.orderNumber}</div>
+                                                                            <div className="text-[9px] text-slate-400">{item.customerName}</div>
+                                                                        </td>
+                                                                        <td className="py-4 text-right">
+                                                                            <button 
+                                                                                onClick={() => updateOrderFulfillment(item.orderId, true, token)}
+                                                                                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl shadow transition-all active:scale-95 cursor-pointer"
+                                                                            >
+                                                                                Fulfill Order
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
                                         const filteredOrders = orders.filter(order => {
                                             let matchesSearch = true;
                                             if (orderSearchQuery) {
@@ -857,6 +992,15 @@ export default function Admin() {
                                                                                 <span className="text-xs font-bold text-slate-900">{item.color}</span>
                                                                             </div>
                                                                         </div>
+                                                                        {(() => {
+                                                                            const itemHeight = item.height || item.customNote?.match(/Height:\s*([^|]+)/)?.[1]?.trim();
+                                                                            return itemHeight ? (
+                                                                                <div>
+                                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Height</span>
+                                                                                    <span className="px-3 py-1 bg-amber-100 text-amber-900 text-[10px] font-bold rounded-lg uppercase">{itemHeight}</span>
+                                                                                </div>
+                                                                            ) : null;
+                                                                        })()}
                                                                     </div>
                                                                     <div className="col-span-full sm:col-span-2 md:col-span-1 border-t sm:border-t-0 sm:border-l border-slate-100 pt-4 sm:pt-0 sm:pl-6">
                                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1 underline">Custom Note</span>

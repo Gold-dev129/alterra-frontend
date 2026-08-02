@@ -384,7 +384,7 @@ export default function ProductDetails() {
                                             onClick={handleBuyNow}
                                             className="w-full bg-slate-900 text-white rounded-2xl h-16 flex items-center justify-center gap-3 uppercase tracking-widest text-sm font-black shadow-xl hover:bg-slate-800 transition-colors"
                                         >
-                                            ⚡ Buy Now
+                                            Buy Now
                                         </button>
                                     </div>
                                 )}

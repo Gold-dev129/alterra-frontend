@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CreditCard, Truck, ShieldCheck, CheckCircle, ShoppingBag, Loader2, X, Plus, Minus, AlertCircle } from 'lucide-react';
 import { usePaystackPayment } from 'react-paystack';
 
+const generatePayReference = () => 'ALT-' + Math.floor(100000 + Math.random() * 900000);
+
 export default function Checkout() {
     console.log('--- ALTERRA CHECKOUT VERSION 8.0 [ULTRA-RELIABILITY] ---', new Date().toLocaleTimeString());
     const { cart = [], createOrder, removeFromCart } = useProducts();
@@ -13,10 +15,11 @@ export default function Checkout() {
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
+    // eslint-disable-next-line no-unused-vars
     const [pendingOrder, setPendingOrder] = useState(null);
     const pendingOrderRef = useRef(null);
     const orderCreationErrorRef = useRef(null);
-    const [payReference, setPayReference] = useState(() => 'ALT-' + Math.floor(100000 + Math.random() * 900000));
+    const [payReference, setPayReference] = useState(() => generatePayReference());
 
     const [formData, setFormData] = useState({
         email: user?.email || '',
@@ -163,7 +166,7 @@ export default function Checkout() {
         setPendingOrder(null);
         pendingOrderRef.current = null;
         orderCreationErrorRef.current = null;
-        setPayReference('ALT-' + Math.floor(100000 + Math.random() * 900000));
+        setPayReference(generatePayReference());
         setError('Payment was cancelled. You can try completing the purchase again.');
     };
 

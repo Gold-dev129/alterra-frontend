@@ -54,6 +54,7 @@ export default function Checkout() {
 
     useEffect(() => {
         if (user && !formData.email) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormData(prev => ({
                 ...prev,
                 email: user.email,

@@ -37,15 +37,16 @@ export default function Checkout() {
     
     // Shipping locations configuration
     const deliveryLocations = [
-        { name: 'Lagos', fee: 7000 },
-        { name: 'Ibadan', fee: 7000 },
+        { name: 'Lagos', fee: 5000 },
+        { name: 'Ibadan', fee: 6500 },
+        { name: 'Caleb University', fee: 7000 },
         { name: 'Abuja', fee: 8000 },
         { name: 'Other States', fee: 8000 }
     ];
 
     const shipping = formData.deliveryMethod === 'pickup' 
         ? 0 
-        : (deliveryLocations.find(l => l.name === formData.location)?.fee || 7000);
+        : (deliveryLocations.find(l => l.name === formData.location)?.fee || 5000);
     const total = subtotal + totalServiceFees + shipping;
 
     useEffect(() => {

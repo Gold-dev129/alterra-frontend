@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import heroBg from '../assets/hero-bg.jpg';
@@ -7,7 +7,8 @@ import { useProducts } from '../context/ProductContext';
 export default function Hero() {
     const navigate = useNavigate();
     const { settings } = useProducts();
-    const bgImage = settings?.dashboard_header_url || heroBg;
+    const [heroImageFailed, setHeroImageFailed] = useState(false);
+    const bgImage = (settings?.dashboard_header_url && !heroImageFailed) ? settings.dashboard_header_url : heroBg;
 
     return (
         <section className="relative h-screen w-full overflow-hidden flex flex-col items-center justify-between bg-[#0a0a0a] py-12">
@@ -18,6 +19,7 @@ export default function Hero() {
                     src={bgImage}
                     alt="Hero Background"
                     className="w-full h-full object-cover"
+                    onError={() => setHeroImageFailed(true)}
                 />
             </div>
 

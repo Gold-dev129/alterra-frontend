@@ -60,7 +60,7 @@ function App() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('https://alterra-node.onrender.com/api/settings');
+        const response = await fetch(`https://alterra-node.onrender.com/api/settings?t=${Date.now()}`);
         const data = await response.json();
         if (data.status === 'success') {
           setSiteSettings(data.data);

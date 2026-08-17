@@ -778,21 +778,43 @@ export default function Admin() {
                                     ) : (() => {
                                         if (isSortedView) {
                                             const unfulfilledOrders = orders.filter(order => order.isFulfilled !== true);
-                                            const itemsToProduce = [];
+                                            const groupedItems = {};
                                             unfulfilledOrders.forEach(order => {
                                                 if (order.items && Array.isArray(order.items)) {
                                                     order.items.forEach(item => {
                                                         const heightFromNote = item.customNote?.match(/Height:\s*([^|]+)/)?.[1]?.trim() || '';
-                                                        itemsToProduce.push({
-                                                            ...item,
-                                                            orderId: order._id,
-                                                            orderNumber: order.orderNumber,
-                                                            customerName: `${order.shippingDetails?.firstName || ''} ${order.shippingDetails?.lastName || ''}`.trim(),
-                                                            height: item.height || heightFromNote || ''
-                                                        });
+                                                        const height = item.height || heightFromNote || '';
+                                                        // Group by item name, size, color, and height
+                                                        const key = `${item.name || ''}_${item.size || ''}_${item.color || ''}_${height}`;
+                                                        
+                                                        if (!groupedItems[key]) {
+                                                            groupedItems[key] = {
+                                                                name: item.name,
+                                                                size: item.size,
+                                                                color: item.color,
+                                                                height: height,
+                                                                quantity: 0,
+                                                                orders: []
+                                                            };
+                                                        }
+                                                        groupedItems[key].quantity += (item.quantity || 1);
+                                                        
+                                                        // Avoid duplicate order entries for the same grouped key in the same order
+                                                        const orderExists = groupedItems[key].orders.find(o => o.orderId === order._id);
+                                                        if (!orderExists) {
+                                                            groupedItems[key].orders.push({
+                                                                orderId: order._id,
+                                                                orderNumber: order.orderNumber,
+                                                                quantity: item.quantity || 1
+                                                            });
+                                                        } else {
+                                                            orderExists.quantity += (item.quantity || 1);
+                                                        }
                                                     });
                                                 }
                                             });
+
+                                            const itemsToProduce = Object.values(groupedItems);
 
                                             if (itemsToProduce.length === 0) {
                                                 return (
@@ -839,16 +861,38 @@ export default function Admin() {
                                                                         </td>
                                                                         <td className="py-4 text-center font-bold text-slate-900">{item.quantity}</td>
                                                                         <td className="py-4">
-                                                                            <div className="text-[10px] font-bold text-slate-500 font-mono">{item.orderNumber}</div>
-                                                                            <div className="text-[9px] text-slate-400">{item.customerName}</div>
+                                                                            <div className="flex flex-col gap-1">
+                                                                                {item.orders.map((ord, oIdx) => (
+                                                                                    <span key={oIdx} className="text-[10px] font-bold text-slate-500 font-mono">
+                                                                                        {ord.orderNumber}{ord.quantity > 1 ? ` (x${ord.quantity})` : ''}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
                                                                         </td>
                                                                         <td className="py-4 text-right">
-                                                                            <button 
-                                                                                onClick={() => updateOrderFulfillment(item.orderId, true, token)}
-                                                                                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl shadow transition-all active:scale-95 cursor-pointer"
-                                                                            >
-                                                                                Fulfill Order
-                                                                            </button>
+                                                                            <div className="flex flex-col gap-1.5 items-end">
+                                                                                {item.orders.length > 1 && (
+                                                                                    <button 
+                                                                                        onClick={async () => {
+                                                                                            for (const ord of item.orders) {
+                                                                                                await updateOrderFulfillment(ord.orderId, true, token);
+                                                                                            }
+                                                                                        }}
+                                                                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-bold uppercase tracking-wider rounded-lg shadow transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                                                                                    >
+                                                                                        Fulfill All ({item.orders.length})
+                                                                                    </button>
+                                                                                )}
+                                                                                {item.orders.map((ord, oIdx) => (
+                                                                                    <button 
+                                                                                        key={oIdx}
+                                                                                        onClick={() => updateOrderFulfillment(ord.orderId, true, token)}
+                                                                                        className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-[9px] font-bold uppercase tracking-wider rounded-lg shadow transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                                                                                    >
+                                                                                        Fulfill {ord.orderNumber}
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
                                                                         </td>
                                                                     </tr>
                                                                 ))}

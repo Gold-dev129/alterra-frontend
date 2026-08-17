@@ -777,7 +777,12 @@ export default function Admin() {
                                         <div className="py-20 flex justify-center bg-white rounded-[2rem] border-2 border-dashed border-slate-100"><Loader2 className="w-8 h-8 animate-spin text-slate-200" /></div>
                                     ) : (() => {
                                         if (isSortedView) {
-                                            const unfulfilledOrders = orders.filter(order => order.isFulfilled !== true);
+                                            const filterDate = new Date(2026, 7, 9, 21, 0, 0); // Aug 9, 2026, 9:00 PM
+                                            const unfulfilledOrders = orders.filter(order => {
+                                                if (order.isFulfilled === true) return false;
+                                                if (!order.createdAt) return false;
+                                                return new Date(order.createdAt) >= filterDate;
+                                            });
                                             const groupedItems = {};
                                             unfulfilledOrders.forEach(order => {
                                                 if (order.items && Array.isArray(order.items)) {
@@ -840,7 +845,6 @@ export default function Admin() {
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Color</th>
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Height</th>
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Qty</th>
-                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Order Ref</th>
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                                                                 </tr>
                                                             </thead>
@@ -860,39 +864,17 @@ export default function Admin() {
                                                                             ) : <span className="text-slate-300 font-serif italic text-xs">--</span>}
                                                                         </td>
                                                                         <td className="py-4 text-center font-bold text-slate-900">{item.quantity}</td>
-                                                                        <td className="py-4">
-                                                                            <div className="flex flex-col gap-1">
-                                                                                {item.orders.map((ord, oIdx) => (
-                                                                                    <span key={oIdx} className="text-[10px] font-bold text-slate-500 font-mono">
-                                                                                        {ord.orderNumber}{ord.quantity > 1 ? ` (x${ord.quantity})` : ''}
-                                                                                    </span>
-                                                                                ))}
-                                                                            </div>
-                                                                        </td>
                                                                         <td className="py-4 text-right">
-                                                                            <div className="flex flex-col gap-1.5 items-end">
-                                                                                {item.orders.length > 1 && (
-                                                                                    <button 
-                                                                                        onClick={async () => {
-                                                                                            for (const ord of item.orders) {
-                                                                                                await updateOrderFulfillment(ord.orderId, true, token);
-                                                                                            }
-                                                                                        }}
-                                                                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-bold uppercase tracking-wider rounded-lg shadow transition-all active:scale-95 cursor-pointer whitespace-nowrap"
-                                                                                    >
-                                                                                        Fulfill All ({item.orders.length})
-                                                                                    </button>
-                                                                                )}
-                                                                                {item.orders.map((ord, oIdx) => (
-                                                                                    <button 
-                                                                                        key={oIdx}
-                                                                                        onClick={() => updateOrderFulfillment(ord.orderId, true, token)}
-                                                                                        className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white text-[9px] font-bold uppercase tracking-wider rounded-lg shadow transition-all active:scale-95 cursor-pointer whitespace-nowrap"
-                                                                                    >
-                                                                                        Fulfill {ord.orderNumber}
-                                                                                    </button>
-                                                                                ))}
-                                                                            </div>
+                                                                            <button 
+                                                                                onClick={async () => {
+                                                                                    for (const ord of item.orders) {
+                                                                                        await updateOrderFulfillment(ord.orderId, true, token);
+                                                                                    }
+                                                                                }}
+                                                                                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider rounded-xl shadow transition-all active:scale-95 cursor-pointer"
+                                                                            >
+                                                                                Fulfill
+                                                                            </button>
                                                                         </td>
                                                                     </tr>
                                                                 ))}

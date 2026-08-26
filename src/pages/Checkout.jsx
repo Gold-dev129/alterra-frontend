@@ -20,6 +20,7 @@ export default function Checkout() {
     const pendingOrderRef = useRef(null);
     const orderCreationErrorRef = useRef(null);
     const [payReference, setPayReference] = useState(() => generatePayReference());
+    const [settings, setSettings] = useState({ self_pickup_enabled: 'true' });
 
     const [formData, setFormData] = useState({
         email: user?.email || '',
@@ -29,7 +30,7 @@ export default function Checkout() {
         deliveryMethod: 'delivery',
         address: '',
         city: '',
-        location: 'Lagos',
+        location: '',
         zipCode: '',
         country: 'Nigeria'
     });
@@ -47,10 +48,11 @@ export default function Checkout() {
         { name: 'Other States', fee: 8000 }
     ];
 
+    const selectedLocation = deliveryLocations.find(l => l.name === formData.location);
     const shipping = formData.deliveryMethod === 'pickup' 
         ? 0 
-        : (deliveryLocations.find(l => l.name === formData.location)?.fee || 5000);
-    const total = subtotal + totalServiceFees + shipping;
+        : (selectedLocation ? selectedLocation.fee : null);
+    const total = subtotal + totalServiceFees + (shipping || 0);
 
     useEffect(() => {
         if (user && !formData.email) {
@@ -65,10 +67,22 @@ export default function Checkout() {
     }, [user, formData.email]);
 
     useEffect(() => {
-        // Pre-warm Render backend to prevent cold start delays during order creation
-        fetch('https://alterra-node.onrender.com/api/settings')
-            .then(() => console.log('Render backend pre-warmed successfully'))
-            .catch(err => console.warn('Render pre-warm failed:', err));
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch(`https://alterra-node.onrender.com/api/settings?t=${Date.now()}`);
+                const data = await response.json();
+                if (data.status === 'success') {
+                    setSettings(data.data);
+                    console.log('Render backend settings pre-warmed & loaded');
+                    if (data.data.self_pickup_enabled === 'false') {
+                        setFormData(prev => ({ ...prev, deliveryMethod: 'delivery' }));
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load settings', err);
+            }
+        };
+        fetchSettings();
     }, []);
 
     const handleInputChange = (e) => {
@@ -273,7 +287,7 @@ export default function Checkout() {
 
                                 <div className="pt-6 pb-2">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Select Delivery Method</p>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className={`grid gap-4 ${settings.self_pickup_enabled !== 'false' ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, deliveryMethod: 'delivery' })}
@@ -282,14 +296,16 @@ export default function Checkout() {
                                             <Truck className="w-5 h-5" />
                                             <span className="text-[10px] font-bold uppercase">Delivery</span>
                                         </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, deliveryMethod: 'pickup' })}
-                                            className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all ${formData.deliveryMethod === 'pickup' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'}`}
-                                        >
-                                            <ShoppingBag className="w-5 h-5" />
-                                            <span className="text-[10px] font-bold uppercase">Self Pickup</span>
-                                        </button>
+                                        {settings.self_pickup_enabled !== 'false' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, deliveryMethod: 'pickup' })}
+                                                className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all ${formData.deliveryMethod === 'pickup' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300'}`}
+                                            >
+                                                <ShoppingBag className="w-5 h-5" />
+                                                <span className="text-[10px] font-bold uppercase">Self Pickup</span>
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                                         <p className="text-[11px] font-bold text-amber-800">
@@ -308,6 +324,7 @@ export default function Checkout() {
                                                 onChange={handleInputChange}
                                                 className="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-slate-100 focus:border-slate-900 transition-all text-xs font-bold uppercase tracking-wider text-slate-800"
                                             >
+                                                <option value="">-- Select Region / Fee --</option>
                                                 {deliveryLocations.map(loc => (
                                                     <option key={loc.name} value={loc.name}>
                                                         {loc.name} - ₦{loc.fee.toLocaleString()}
@@ -338,6 +355,10 @@ export default function Checkout() {
                                 {(!formData?.email || !formData?.phone || !formData?.firstName) ? (
                                     <div className="w-full py-5 bg-slate-100 text-slate-400 rounded-full font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-3">
                                         Fill Information to Pay
+                                    </div>
+                                ) : (formData.deliveryMethod === 'delivery' && !formData.location) ? (
+                                    <div className="w-full py-5 bg-red-50 text-red-500 border border-red-100 rounded-full font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 text-center">
+                                        Select a Delivery Region / Fee to Pay
                                     </div>
                                 ) : (
                                     <div className="relative group">
@@ -443,7 +464,12 @@ export default function Checkout() {
                                 </div>
                                 <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     <span>Delivery Fee</span>
-                                    <span className="text-slate-900">{shipping === 0 ? 'Free (Pickup)' : `₦${shipping.toLocaleString()}`}</span>
+                                    <span className="text-slate-900">
+                                        {shipping === 0 
+                                            ? 'Free (Pickup)' 
+                                            : (shipping === null ? 'Not Selected' : `₦${shipping.toLocaleString()}`)
+                                        }
+                                    </span>
                                 </div>
                                 <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-50 pt-4">
                                     <span className="font-serif italic text-2xl text-slate-900">Total</span>

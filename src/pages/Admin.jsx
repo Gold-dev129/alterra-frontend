@@ -1162,9 +1162,39 @@ export default function Admin() {
                                                     </label>
                                                 </div>
                                             </div>
-                                            <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-slate-100 shadow-lg">
+                                        <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-slate-100 shadow-lg">
                                                 <img src={dashboardHeaderImg} alt="Hero Preview" className="w-full h-full object-cover" />
                                                 <div className="absolute inset-0 bg-black/20" />
+                                            </div>
+                                        </div>
+
+                                        <div className="h-px bg-slate-100" />
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center text-left">
+                                            <div className="space-y-4">
+                                                <h3 className="text-xl font-serif font-bold text-slate-900 uppercase tracking-tight italic">Store Settings</h3>
+                                                <p className="text-slate-400 text-xs leading-relaxed">Control whether Self-Pickup option is active on the checkout page.</p>
+                                                <div className="flex gap-4 pt-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            const newValue = settings.self_pickup_enabled === 'false' ? 'true' : 'false';
+                                                            await handleUpdateSetting('self_pickup_enabled', newValue);
+                                                        }}
+                                                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+                                                            settings.self_pickup_enabled !== 'false'
+                                                                ? 'bg-slate-950 hover:bg-slate-900 text-white'
+                                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+                                                        }`}
+                                                    >
+                                                        {settings.self_pickup_enabled !== 'false' ? 'Disable Self-Pickup' : 'Enable Self-Pickup'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="bg-slate-50 flex items-center justify-center p-10 rounded-[2.5rem] border border-dashed border-slate-200 min-h-[120px]">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center leading-relaxed">
+                                                    Status: {settings.self_pickup_enabled !== 'false' ? '🟢 Self-Pickup is currently available' : '🔴 Self-Pickup is disabled'}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

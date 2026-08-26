@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
         login,
         signup,
         logout,
-        isAdmin: user?.role === 'admin'
+        isAdmin: user?.email === 'goldadeleye645@gmail.com'
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

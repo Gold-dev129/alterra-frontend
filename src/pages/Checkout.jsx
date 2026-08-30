@@ -41,11 +41,11 @@ export default function Checkout() {
     
     // Shipping locations configuration
     const deliveryLocations = [
-        { name: 'Lagos', fee: 5000 },
+        { name: 'Lagos', fee: 5500 },
         { name: 'Ibadan', fee: 6500 },
         { name: 'Caleb University', fee: 7000 },
-        { name: 'Abuja', fee: 8000 },
-        { name: 'Other States', fee: 8000 }
+        { name: 'Abuja', fee: 8500 },
+        { name: 'Other States', fee: 8500 }
     ];
 
     const selectedLocation = deliveryLocations.find(l => l.name === formData.location);

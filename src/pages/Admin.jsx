@@ -41,7 +41,9 @@ export default function Admin() {
         { label: 'XXL', chest: '', waist: '', length: '', sleeve: '' }
     ]);
     const [sizeChartColumns, setSizeChartColumns] = useState(['label', 'chest', 'waist', 'length', 'sleeve']);
-    const [images, setImages] = useState([]);
+    const [productImages, setProductImages] = useState([]);
+    const [modelImages, setModelImages] = useState([]);
+    const [sizeGuideImage, setSizeGuideImage] = useState(null);
     
     const getHeaderLabel = (key) => {
         if (key === 'label') return 'Size Label';
@@ -148,9 +150,7 @@ export default function Admin() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleFileChange = (e) => {
-        setImages(e.target.files);
-    };
+
 
     const handleEdit = (product) => {
         setEditId(product._id);
@@ -190,7 +190,9 @@ export default function Admin() {
             ]);
             setSizeChartColumns(['label', 'chest', 'waist', 'length', 'sleeve']);
         }
-        setImages([]);
+        setProductImages([]);
+        setModelImages([]);
+        setSizeGuideImage(null);
         setActiveTab('products');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -206,7 +208,9 @@ export default function Admin() {
             { label: 'XXL', chest: '', waist: '', length: '', sleeve: '' }
         ]);
         setSizeChartColumns(['label', 'chest', 'waist', 'length', 'sleeve']);
-        setImages([]);
+        setProductImages([]);
+        setModelImages([]);
+        setSizeGuideImage(null);
     };
 
     const handleSubmit = async (e) => {
@@ -235,8 +239,14 @@ export default function Admin() {
         data.append('waistOptions', JSON.stringify(formData.waistOptions));
         data.append('sizeChart', JSON.stringify(sizeChart));
 
-        for (let i = 0; i < images.length; i++) {
-            data.append('images', images[i]);
+        for (let i = 0; i < productImages.length; i++) {
+            data.append('images', productImages[i]);
+        }
+        for (let i = 0; i < modelImages.length; i++) {
+            data.append('modelImages', modelImages[i]);
+        }
+        if (sizeGuideImage) {
+            data.append('sizeGuideImage', sizeGuideImage);
         }
 
         let result;
@@ -584,18 +594,51 @@ export default function Admin() {
                                             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-2">Check to enable customers to select waist types.</p>
                                         </div>
 
-                                        <div className="relative group">
-                                            <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 transition-all group-hover:border-slate-400 group-hover:bg-slate-50 flex flex-col items-center justify-center text-center">
-                                                <Image className="w-10 h-10 text-slate-300 mb-2 group-hover:text-slate-500 transition-colors" />
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Add Imagery (Black, White, etc.)</p>
-                                                <p className="text-[10px] text-slate-300">Select multiple files to enable the carousel</p>
-                                                <input type="file" multiple onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                            </div>
-                                            {images.length > 0 && (
-                                                <div className="mt-2 text-center text-xs text-green-600 font-bold">
-                                                    {images.length} files selected
+                                        <div className="space-y-6">
+                                            {/* Upload Zone 1: Product / Color Images */}
+                                            <div className="relative group">
+                                                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 transition-all group-hover:border-slate-400 group-hover:bg-slate-50 flex flex-col items-center justify-center text-center">
+                                                    <Image className="w-8 h-8 text-slate-300 mb-2 group-hover:text-slate-500 transition-colors" />
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Product & Color Images</p>
+                                                    <p className="text-[9px] text-slate-300">Select multiple product/color files</p>
+                                                    <input type="file" multiple onChange={(e) => setProductImages(e.target.files)} className="absolute inset-0 opacity-0 cursor-pointer" />
                                                 </div>
-                                            )}
+                                                {productImages.length > 0 && (
+                                                    <div className="mt-2 text-center text-xs text-green-600 font-bold">
+                                                        {productImages.length} product files selected
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Upload Zone 2: Model Pictures */}
+                                            <div className="relative group">
+                                                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 transition-all group-hover:border-slate-400 group-hover:bg-slate-50 flex flex-col items-center justify-center text-center">
+                                                    <Image className="w-8 h-8 text-slate-300 mb-2 group-hover:text-slate-500 transition-colors" />
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Model Pictures (Optional)</p>
+                                                    <p className="text-[9px] text-slate-300">Select files showing the product on a model</p>
+                                                    <input type="file" multiple onChange={(e) => setModelImages(e.target.files)} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                                </div>
+                                                {modelImages.length > 0 && (
+                                                    <div className="mt-2 text-center text-xs text-green-600 font-bold">
+                                                        {modelImages.length} model files selected
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Upload Zone 3: Size Guide Image */}
+                                            <div className="relative group">
+                                                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 transition-all group-hover:border-slate-400 group-hover:bg-slate-50 flex flex-col items-center justify-center text-center">
+                                                    <Image className="w-8 h-8 text-slate-300 mb-2 group-hover:text-slate-500 transition-colors" />
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Custom Size Guide (Optional)</p>
+                                                    <p className="text-[9px] text-slate-300">Select a single size guide image for this product</p>
+                                                    <input type="file" onChange={(e) => setSizeGuideImage(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                                </div>
+                                                {sizeGuideImage && (
+                                                    <div className="mt-2 text-center text-xs text-green-600 font-bold">
+                                                        Size guide file: {sizeGuideImage.name}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 

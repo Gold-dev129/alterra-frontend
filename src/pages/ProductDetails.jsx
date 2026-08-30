@@ -135,9 +135,15 @@ export default function ProductDetails() {
         );
     }
 
-    const images = product.images && product.images.length > 0
-        ? product.images.map(img => `${img.replace(/\\/g, '/')}`)
-        : ['https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=1974&auto=format&fit=crop'];
+    const productImages = product.images && product.images.length > 0
+        ? product.images.map(img => ({ url: `${img.replace(/\\/g, '/')}`, type: 'product' }))
+        : [{ url: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=1974&auto=format&fit=crop', type: 'product' }];
+
+    const modelImages = product.modelImages && product.modelImages.length > 0
+        ? product.modelImages.map(img => ({ url: `${img.replace(/\\/g, '/')}`, type: 'model' }))
+        : [];
+
+    const displayImages = [...productImages, ...modelImages];
 
     return (
         <div className="min-h-screen pt-32 pb-24 bg-white">
@@ -165,7 +171,7 @@ export default function ProductDetails() {
                             <AnimatePresence mode="wait">
                                 <motion.img
                                     key={selectedImageIdx}
-                                    src={images[selectedImageIdx]}
+                                    src={displayImages[selectedImageIdx]?.url}
                                     alt={product.name}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -175,10 +181,15 @@ export default function ProductDetails() {
                                 />
                             </AnimatePresence>
 
+                            {displayImages[selectedImageIdx]?.type === 'model' && (
+                                <span className="absolute top-6 right-6 bg-slate-900/80 backdrop-blur-sm text-white text-[9px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest z-10">
+                                    Model View
+                                </span>
+                            )}
 
-                            {images.length > 1 && (
+                            {displayImages.length > 1 && (
                                 <div className="absolute inset-x-0 bottom-6 flex justify-center gap-2">
-                                    {images.map((_, i) => (
+                                    {displayImages.map((_, i) => (
                                         <button
                                             key={i}
                                             onClick={() => setSelectedImageIdx(i)}
@@ -189,15 +200,15 @@ export default function ProductDetails() {
                             )}
                         </div>
 
-                        {images.length > 1 && (
+                        {displayImages.length > 1 && (
                             <div className="grid grid-cols-5 gap-4">
-                                {images.map((img, i) => (
+                                {displayImages.map((img, i) => (
                                     <button
                                         key={i}
                                         onClick={() => setSelectedImageIdx(i)}
                                         className={`aspect-[3/4] rounded-2xl bg-transparent border-2 cursor-pointer transition-all overflow-hidden ${selectedImageIdx === i ? 'border-slate-900' : 'border-transparent hover:border-slate-200'}`}
                                     >
-                                        <img src={img} alt="" className="w-full h-full object-cover" />
+                                        <img src={img.url} alt="" className="w-full h-full object-cover" />
                                     </button>
                                 ))}
                             </div>
@@ -431,36 +442,45 @@ export default function ProductDetails() {
                                     ✕
                                 </button>
                             </div>
-                            
-                            <div className="p-8 overflow-x-auto">
-                                <table className="w-full text-left border-collapse min-w-[500px]">
-                                    <thead>
-                                        <tr className="border-b-2 border-slate-900">
-                                            {sortedColumns.map((col) => (
-                                                <th 
-                                                    key={col} 
-                                                    className={`py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 ${col === labelCol ? '' : 'text-center'}`}
-                                                >
-                                                    {getHeaderLabel(col)}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="text-sm">
-                                        {sizeChartData.map((row, i) => (
-                                            <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                                {sortedColumns.map((col, colIdx) => (
-                                                    <td 
+                                                   <div className="p-8 overflow-x-auto max-h-[70vh]">
+                                {product.sizeGuideImage ? (
+                                    <div className="flex flex-col items-center">
+                                        <img 
+                                            src={product.sizeGuideImage.replace(/\\/g, '/')} 
+                                            alt={`Size Guide for ${product.name}`} 
+                                            className="max-h-[50vh] w-auto object-contain rounded-2xl border border-slate-100 mb-6 shadow-sm"
+                                        />
+                                    </div>
+                                ) : (
+                                    <table className="w-full text-left border-collapse min-w-[500px]">
+                                        <thead>
+                                            <tr className="border-b-2 border-slate-900">
+                                                {sortedColumns.map((col) => (
+                                                    <th 
                                                         key={col} 
-                                                        className={`py-4 ${col === labelCol ? 'font-black text-slate-900 uppercase tracking-tighter' : `text-center ${colIdx % 2 === 1 ? 'font-bold text-slate-600 bg-slate-50/30' : 'font-medium text-slate-500'}`}`}
+                                                        className={`py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 ${col === labelCol ? '' : 'text-center'}`}
                                                     >
-                                                        {row[col] || '--'}
-                                                    </td>
+                                                        {getHeaderLabel(col)}
+                                                    </th>
                                                 ))}
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="text-sm">
+                                            {sizeChartData.map((row, i) => (
+                                                <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                                    {sortedColumns.map((col, colIdx) => (
+                                                        <td 
+                                                            key={col} 
+                                                            className={`py-4 ${col === labelCol ? 'font-black text-slate-900 uppercase tracking-tighter' : `text-center ${colIdx % 2 === 1 ? 'font-bold text-slate-600 bg-slate-50/30' : 'font-medium text-slate-500'}`}`}
+                                                        >
+                                                            {row[col] || '--'}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
                                 
                                 <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-100">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pro Tip:</p>

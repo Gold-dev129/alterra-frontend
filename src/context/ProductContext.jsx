@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { io } from 'socket.io-client';
 
 const ProductContext = createContext();
 
@@ -48,30 +49,30 @@ export const ProductProvider = ({ children }) => {
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Fetch products from API
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch(`https://alterra-node.onrender.com/api/products?t=${Date.now()}`);
-        const data = await response.json();
-        if (response.ok && data.data && Array.isArray(data.data.products)) {
-          const sorted = [...data.data.products].sort((a, b) => b._id.localeCompare(a._id));
-          setProducts(sorted);
-          localStorage.setItem('alterra_products_cache', JSON.stringify(sorted));
-        } else {
-          if (!localStorage.getItem('alterra_products_cache')) {
-            setError(data.message || 'Failed to fetch products');
-          }
-        }
-      } catch {
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await fetch(`https://alterra-node.onrender.com/api/products?t=${Date.now()}`);
+      const data = await response.json();
+      if (response.ok && data.data && Array.isArray(data.data.products)) {
+        const sorted = [...data.data.products].sort((a, b) => b._id.localeCompare(a._id));
+        setProducts(sorted);
+        localStorage.setItem('alterra_products_cache', JSON.stringify(sorted));
+      } else {
         if (!localStorage.getItem('alterra_products_cache')) {
-          setError('Server error while loading products');
+          setError(data.message || 'Failed to fetch products');
         }
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch {
+      if (!localStorage.getItem('alterra_products_cache')) {
+        setError('Server error while loading products');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  // Initial fetch on mount
+  useEffect(() => {
     const fetchSettings = async () => {
       try {
         const response = await fetch(`https://alterra-node.onrender.com/api/settings?t=${Date.now()}`);
@@ -86,7 +87,91 @@ export const ProductProvider = ({ children }) => {
 
     fetchProducts();
     fetchSettings();
-  }, []);
+  }, [fetchProducts]);
+
+  // Real-time catalog & price updates via Socket.IO and tab focus
+  useEffect(() => {
+    const socket = io('https://alterra-node.onrender.com', {
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('productUpdated', (updatedProduct) => {
+      if (!updatedProduct || !updatedProduct._id) return;
+      setProducts((prev) => {
+        const exists = prev.some((p) => p._id === updatedProduct._id);
+        const nextProducts = exists
+          ? prev.map((p) => (p._id === updatedProduct._id ? updatedProduct : p))
+          : [updatedProduct, ...prev];
+        localStorage.setItem('alterra_products_cache', JSON.stringify(nextProducts));
+        return nextProducts;
+      });
+    });
+
+    socket.on('productCreated', (newProduct) => {
+      if (!newProduct || !newProduct._id) return;
+      setProducts((prev) => {
+        const nextProducts = [newProduct, ...prev.filter((p) => p._id !== newProduct._id)];
+        localStorage.setItem('alterra_products_cache', JSON.stringify(nextProducts));
+        return nextProducts;
+      });
+    });
+
+    socket.on('productDeleted', (deletedId) => {
+      if (!deletedId) return;
+      setProducts((prev) => {
+        const nextProducts = prev.filter((p) => p._id !== deletedId);
+        localStorage.setItem('alterra_products_cache', JSON.stringify(nextProducts));
+        return nextProducts;
+      });
+    });
+
+    const handleFocus = () => {
+      fetchProducts();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      socket.disconnect();
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchProducts]);
+
+  // Automatically sync cart item prices, names, and images whenever product catalog updates
+  useEffect(() => {
+    if (!products || products.length === 0) return;
+
+    setCart((prevCart) => {
+      let hasChanges = false;
+      const updatedCart = prevCart.map((item) => {
+        const matchingProduct = products.find((p) => p._id === item._id);
+        if (matchingProduct) {
+          const newPrice = Number(matchingProduct.price);
+          const priceChanged = !isNaN(newPrice) && item.price !== newPrice;
+          const nameChanged = matchingProduct.name && item.name !== matchingProduct.name;
+          const newImg = matchingProduct.images?.[0] || matchingProduct.image;
+          const imageChanged = newImg && item.image !== newImg;
+
+          if (priceChanged || nameChanged || imageChanged) {
+            hasChanges = true;
+            return {
+              ...item,
+              price: !isNaN(newPrice) ? newPrice : item.price,
+              name: matchingProduct.name || item.name,
+              images: matchingProduct.images || item.images,
+              image: newImg || item.image
+            };
+          }
+        }
+        return item;
+      });
+
+      if (hasChanges) {
+        localStorage.setItem('alterra_cart', JSON.stringify(updatedCart));
+        return updatedCart;
+      }
+      return prevCart;
+    });
+  }, [products]);
 
   // Sync cart with localStorage
   useEffect(() => {
@@ -157,11 +242,36 @@ export const ProductProvider = ({ children }) => {
       });
       const data = await response.json();
       if (response.ok) {
+        const updatedProd = data.data.product;
         setProducts(prev => {
-          const newProducts = prev.map(p => p._id === productId ? data.data.product : p);
+          const newProducts = prev.map(p => p._id === productId ? updatedProd : p);
           localStorage.setItem('alterra_products_cache', JSON.stringify(newProducts));
           return newProducts;
         });
+
+        // Immediately sync matching items in bag/cart in current session
+        setCart(prevCart => {
+          let hasChanges = false;
+          const updatedCart = prevCart.map(item => {
+            if (item._id === productId && updatedProd.price !== undefined) {
+              hasChanges = true;
+              return {
+                ...item,
+                price: Number(updatedProd.price),
+                name: updatedProd.name || item.name,
+                images: updatedProd.images || item.images,
+                image: updatedProd.images?.[0] || updatedProd.image || item.image
+              };
+            }
+            return item;
+          });
+          if (hasChanges) {
+            localStorage.setItem('alterra_cart', JSON.stringify(updatedCart));
+            return updatedCart;
+          }
+          return prevCart;
+        });
+
         return { success: true };
       }
       return { success: false, message: data.message };
@@ -358,6 +468,7 @@ export const ProductProvider = ({ children }) => {
 
   const value = {
     products,
+    fetchProducts,
     orders,
     fetchOrders,
     updateOrderStatus,

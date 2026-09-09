@@ -4,7 +4,11 @@ import { motion } from 'framer-motion';
 import { Minus, Plus, X, Trash2 } from 'lucide-react';
 
 export default function CartItem({ item }) {
-  const { updateQuantity, removeFromCart, updateCartItemAttributes } = useProducts();
+  const { updateQuantity, removeFromCart, updateCartItemAttributes, products } = useProducts();
+
+  const liveProduct = products?.find(p => p._id === item._id);
+  const currentPrice = (liveProduct && liveProduct.price !== undefined) ? Number(liveProduct.price) : (item.price || 0);
+  const displayName = liveProduct?.name || item.name;
 
   const imageUrl = item.images && item.images.length > 0
     ? `${item.images[0].replace(/\\/g, '/')}`
@@ -33,7 +37,7 @@ export default function CartItem({ item }) {
       <div className="flex-grow flex flex-col justify-between py-1">
         <div className="flex justify-between items-start">
           <div className="flex-grow">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight line-clamp-1 pr-4">{item.name}</h4>
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight line-clamp-1 pr-4">{displayName}</h4>
           </div>
           <button
             onClick={() => removeFromCart(item._id, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote })}
@@ -100,7 +104,7 @@ export default function CartItem({ item }) {
               <Plus className="w-3 h-3" />
             </button>
           </div>
-          <p className="text-xs font-bold text-slate-900">₦{(item.price * item.quantity).toFixed(2)}</p>
+          <p className="text-xs font-bold text-slate-900">₦{(currentPrice * item.quantity).toFixed(2)}</p>
         </div>
       </div>
     </motion.div>

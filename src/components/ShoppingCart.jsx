@@ -7,11 +7,16 @@ import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import CartItem from './CartItem';
 
 export default function ShoppingCart() {
-  const { cart, isCartOpen, setIsCartOpen } = useProducts();
+  const { cart, products, isCartOpen, setIsCartOpen } = useProducts();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const getItemPrice = (item) => {
+    const live = products?.find(p => p._id === item._id);
+    return (live && live.price !== undefined) ? Number(live.price) : (item.price || 0);
+  };
+
+  const subtotal = cart.reduce((acc, item) => acc + (getItemPrice(item) * item.quantity), 0);
   const shipping = subtotal > 150 ? 0 : 15;
   const total = subtotal + shipping;
 

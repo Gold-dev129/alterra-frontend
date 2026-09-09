@@ -10,7 +10,7 @@ const generatePayReference = () => 'ALT-' + Math.floor(100000 + Math.random() * 
 
 export default function Checkout() {
     console.log('--- ALTERRA CHECKOUT VERSION 8.0 [ULTRA-RELIABILITY] ---', new Date().toLocaleTimeString());
-    const { cart = [], createOrder, removeFromCart } = useProducts();
+    const { cart = [], products = [], createOrder, removeFromCart } = useProducts();
     const { user, token } = useAuth();
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
@@ -35,20 +35,34 @@ export default function Checkout() {
         country: 'Nigeria'
     });
 
-    const subtotal = (cart || []).reduce((acc, item) => acc + ((item?.price || 0) * (item?.quantity || 0)), 0);
+    const getCartItemPrice = (item) => {
+        const liveProduct = products?.find(p => p._id === item?._id);
+        return (liveProduct && liveProduct.price !== undefined) ? Number(liveProduct.price) : (item?.price || 0);
+    };
+
+    const getCartItemName = (item) => {
+        const liveProduct = products?.find(p => p._id === item?._id);
+        return liveProduct?.name || item?.name || 'Item';
+    };
+
+    const subtotal = (cart || []).reduce((acc, item) => acc + (getCartItemPrice(item) * (item?.quantity || 0)), 0);
     const totalQuantity = (cart || []).reduce((acc, item) => acc + (item?.quantity || 0), 0);
     const totalServiceFees = totalQuantity === 0 ? 0 : (totalQuantity >= 3 ? 2000 : 1000);
     
     // Shipping locations configuration
     const deliveryLocations = [
-        { name: 'Lagos', fee: 5500 },
-        { name: 'Ibadan', fee: 6500 },
-        { name: 'Caleb University', fee: 7000 },
+        { name: 'Lagos', fee: 6800 },
+        { name: 'Ibadan', fee: 7000 },
+        { name: 'Caleb', fee: 7000 },
+        { name: 'Babcock', fee: 6000 },
         { name: 'Abuja', fee: 8500 },
         { name: 'Other States', fee: 8500 }
     ];
 
-    const selectedLocation = deliveryLocations.find(l => l.name === formData.location);
+    const selectedLocation = deliveryLocations.find(l => 
+        l.name.toLowerCase() === (formData.location || '').toLowerCase() ||
+        (formData.location === 'Caleb University' && l.name === 'Caleb')
+    );
     const shipping = formData.deliveryMethod === 'pickup' 
         ? 0 
         : (selectedLocation ? selectedLocation.fee : null);
@@ -157,8 +171,8 @@ export default function Checkout() {
                             deliveryMethod: formData?.deliveryMethod || 'delivery'
                         },
                         items: (cart || []).map(item => ({
-                            name: item?.name,
-                            price: item?.price || 0,
+                            name: getCartItemName(item),
+                            price: getCartItemPrice(item),
                             quantity: item?.quantity || 1,
                             size: item?.selectedSize || 'M',
                             color: item?.selectedColor || 'Black',
@@ -199,8 +213,8 @@ export default function Checkout() {
                     : (item.customNote || '');
                 return {
                     product: item?._id,
-                    name: item?.name,
-                    price: item?.price || 0,
+                    name: getCartItemName(item),
+                    price: getCartItemPrice(item),
                     quantity: item?.quantity || 1,
                     size: item?.selectedSize || 'M',
                     color: item?.selectedColor || 'Black',
@@ -433,7 +447,7 @@ export default function Checkout() {
                                         </div>
                                         <div className="flex-grow flex flex-col justify-between py-1">
                                             <div className="flex justify-between items-start">
-                                                <h4 className="text-[10px] font-bold text-slate-900 uppercase tracking-tight line-clamp-2">{item?.name || 'Item'}</h4>
+                                                <h4 className="text-[10px] font-bold text-slate-900 uppercase tracking-tight line-clamp-2">{getCartItemName(item)}</h4>
                                                 <button onClick={() => item?._id && removeFromCart(item._id, { size: item.selectedSize, color: item.selectedColor, waist: item.selectedWaist, customNote: item.customNote })} className="text-slate-300 hover:text-red-500 transition-colors">
                                                     <X className="w-4 h-4" />
                                                 </button>
@@ -446,7 +460,7 @@ export default function Checkout() {
                                             </div>
                                             <div className="flex justify-between items-end">
                                                 <span className="text-[10px] font-bold text-slate-400">Qty: {item?.quantity || 1}</span>
-                                                <span className="text-xs font-bold text-slate-900">₦{((item?.price || 0) * (item?.quantity || 1)).toLocaleString()}</span>
+                                                <span className="text-xs font-bold text-slate-900">₦{(getCartItemPrice(item) * (item?.quantity || 1)).toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>

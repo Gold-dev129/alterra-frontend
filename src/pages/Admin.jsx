@@ -830,16 +830,19 @@ export default function Admin() {
                                             unfulfilledOrders.forEach(order => {
                                                 if (order.items && Array.isArray(order.items)) {
                                                     order.items.forEach(item => {
+                                                        const waistFromNote = item.customNote?.match(/Waist:\s*([^|]+)/)?.[1]?.trim() || '';
+                                                        const waist = item.waist || waistFromNote || '';
                                                         const heightFromNote = item.customNote?.match(/Height:\s*([^|]+)/)?.[1]?.trim() || '';
                                                         const height = item.height || heightFromNote || '';
-                                                        // Group by item name, size, color, and height
-                                                        const key = `${item.name || ''}_${item.size || ''}_${item.color || ''}_${height}`;
+                                                        // Group by item name, size, color, waist, and height
+                                                        const key = `${item.name || ''}_${item.size || ''}_${item.color || ''}_${waist}_${height}`;
                                                         
                                                         if (!groupedItems[key]) {
                                                             groupedItems[key] = {
                                                                 name: item.name,
                                                                 size: item.size,
                                                                 color: item.color,
+                                                                waist: waist,
                                                                 height: height,
                                                                 quantity: 0,
                                                                 orders: []
@@ -877,7 +880,7 @@ export default function Admin() {
                                                 <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm p-6 sm:p-8 space-y-6">
                                                     <div className="border-b border-slate-100 pb-4">
                                                         <h3 className="text-lg font-serif italic font-bold text-slate-900">Unfulfilled Production & Pack List</h3>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Quickly view sizes, colors, heights, and fulfill directly</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Quickly view sizes, colors, waists, heights, and fulfill directly</p>
                                                     </div>
                                                     <div className="overflow-x-auto">
                                                         <table className="w-full text-left border-collapse">
@@ -886,6 +889,7 @@ export default function Admin() {
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Product Name</th>
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Size</th>
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Color</th>
+                                                                    <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Waist</th>
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Height</th>
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Qty</th>
                                                                     <th className="py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
@@ -900,6 +904,13 @@ export default function Admin() {
                                                                         </td>
                                                                         <td className="py-4 text-center">
                                                                             <span className="text-xs font-semibold text-slate-600">{item.color}</span>
+                                                                        </td>
+                                                                        <td className="py-4 text-center">
+                                                                            {item.waist ? (
+                                                                                <span className="px-2 py-0.5 bg-purple-100 text-purple-900 text-[10px] font-black rounded uppercase">
+                                                                                    {item.waist.toLowerCase().includes('waist') ? item.waist : `${item.waist} Waist`}
+                                                                                </span>
+                                                                            ) : <span className="text-slate-300 font-serif italic text-xs">--</span>}
                                                                         </td>
                                                                         <td className="py-4 text-center">
                                                                             {item.height ? (
@@ -1041,6 +1052,17 @@ export default function Admin() {
                                                                             </div>
                                                                         </div>
                                                                         {(() => {
+                                                                            const itemWaist = item.waist || item.customNote?.match(/Waist:\s*([^|]+)/)?.[1]?.trim();
+                                                                            return itemWaist ? (
+                                                                                <div>
+                                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Waist</span>
+                                                                                    <span className="px-3 py-1 bg-purple-100 text-purple-900 text-[10px] font-bold rounded-lg uppercase">
+                                                                                        {itemWaist.toLowerCase().includes('waist') ? itemWaist : `${itemWaist} Waist`}
+                                                                                    </span>
+                                                                                </div>
+                                                                            ) : null;
+                                                                        })()}
+                                                                        {(() => {
                                                                             const itemHeight = item.height || item.customNote?.match(/Height:\s*([^|]+)/)?.[1]?.trim();
                                                                             return itemHeight ? (
                                                                                 <div>
@@ -1053,7 +1075,13 @@ export default function Admin() {
                                                                     <div className="col-span-full sm:col-span-2 md:col-span-1 border-t sm:border-t-0 sm:border-l border-slate-100 pt-4 sm:pt-0 sm:pl-6">
                                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1 underline">Custom Note</span>
                                                                         <p className="text-xs italic text-slate-600 leading-relaxed bg-white p-3 rounded-xl border border-slate-50">
-                                                                            {item.customNote || "No extra message provided."}
+                                                                            {(() => {
+                                                                                const cleanNote = (item.customNote || '')
+                                                                                    .replace(/Waist:\s*[^|]+(\s*\|\s*)?/gi, '')
+                                                                                    .replace(/Height:\s*[^|]+(\s*\|\s*)?/gi, '')
+                                                                                    .trim();
+                                                                                return cleanNote || "No extra message provided.";
+                                                                            })()}
                                                                         </p>
                                                                     </div>
                                                                 </div>

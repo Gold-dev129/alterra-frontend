@@ -78,10 +78,10 @@ export default function OrderConfirmed() {
                     </div>
 
                     <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to={user ? "/my-orders" : "/login"} className="px-8 py-4 bg-slate-100 text-slate-900 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all">
+                        <Link to={user ? "/my-orders" : "/signup"} className="px-8 py-4 bg-slate-100 text-slate-900 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all">
                             View Order History
                         </Link>
-                        <Link to="/" className="px-8 py-4 bg-slate-900 text-white font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-800 transition-all">
+                        <Link to="/products" className="px-8 py-4 bg-slate-900 text-white font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-800 transition-all">
                             Continue Shopping
                         </Link>
                     </div>

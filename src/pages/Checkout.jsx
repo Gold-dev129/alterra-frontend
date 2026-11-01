@@ -52,7 +52,7 @@ export default function Checkout() {
     // Shipping locations configuration
     const deliveryLocations = [
         { name: 'Lagos', fee: 6800 },
-        { name: 'Ibadan', fee: 7000 },
+        { name: 'Ibadan', fee: 4000 },
         { name: 'Caleb', fee: 7000 },
         { name: 'Babcock', fee: 6000 },
         { name: 'Abuja', fee: 8500 },
@@ -176,6 +176,9 @@ export default function Checkout() {
                             quantity: item?.quantity || 1,
                             size: item?.selectedSize || 'M',
                             color: item?.selectedColor || 'Black',
+                            waist: item?.selectedWaist || item?.waist || '',
+                            height: item?.selectedHeight || item?.height || '',
+                            customNote: item?.customNote || '',
                             image: item?.images?.[0] || item?.image || '/placeholder.png'
                         })),
                         subtotal,
@@ -207,9 +210,13 @@ export default function Checkout() {
 
         const orderData = {
             items: (cart || []).map(item => {
-                const heightPrefix = item?.selectedHeight ? `Height: ${item.selectedHeight}` : '';
-                const finalCustomNote = heightPrefix 
-                    ? (item.customNote ? `${heightPrefix} | ${item.customNote}` : heightPrefix)
+                const heightVal = item?.selectedHeight || item?.height || '';
+                const waistVal = item?.selectedWaist || item?.waist || '';
+                const heightPrefix = heightVal ? `Height: ${heightVal}` : '';
+                const waistPrefix = waistVal ? `Waist: ${waistVal}` : '';
+                const prefixes = [waistPrefix, heightPrefix].filter(Boolean).join(' | ');
+                const finalCustomNote = prefixes 
+                    ? (item.customNote ? `${prefixes} | ${item.customNote}` : prefixes)
                     : (item.customNote || '');
                 return {
                     product: item?._id,
@@ -218,10 +225,10 @@ export default function Checkout() {
                     quantity: item?.quantity || 1,
                     size: item?.selectedSize || 'M',
                     color: item?.selectedColor || 'Black',
-                    waist: item?.selectedWaist || '',
+                    waist: waistVal,
                     image: item?.images?.[0] || item?.image || '/placeholder.png',
                     customNote: finalCustomNote,
-                    height: item?.selectedHeight || ''
+                    height: heightVal
                 };
             }),
             shippingDetails: { 

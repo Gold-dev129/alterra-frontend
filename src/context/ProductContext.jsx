@@ -289,13 +289,14 @@ export const ProductProvider = ({ children }) => {
 
   const addToCart = (product, attributes = {}) => {
     setCart((prev) => {
-      const { size = 'M', color = 'Black', waist = '', customNote = '' } = attributes;
+      const { size = 'M', color = 'Black', waist = '', customNote = '', height = '' } = attributes;
       const existing = prev.find((item) =>
         item._id === product._id &&
         item.selectedSize === size &&
         item.selectedColor === color &&
         item.selectedWaist === waist &&
-        item.customNote === customNote
+        item.customNote === customNote &&
+        (item.selectedHeight || item.height || '') === (height || '')
       );
 
       if (existing) {
@@ -304,7 +305,8 @@ export const ProductProvider = ({ children }) => {
             item.selectedSize === size &&
             item.selectedColor === color &&
             item.selectedWaist === waist &&
-            item.customNote === customNote)
+            item.customNote === customNote &&
+            (item.selectedHeight || item.height || '') === (height || ''))
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -315,7 +317,9 @@ export const ProductProvider = ({ children }) => {
         selectedSize: size,
         selectedColor: color,
         selectedWaist: waist,
-        customNote: customNote
+        customNote: customNote,
+        selectedHeight: height,
+        height: height
       }];
     });
     setIsCartOpen(true);

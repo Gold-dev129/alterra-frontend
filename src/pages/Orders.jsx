@@ -124,7 +124,11 @@ export default function Orders() {
                     </div>
                     <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-center border-t sm:border-t-0 sm:border-l border-slate-50 pt-6 sm:pt-0 sm:pl-10">
                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status Tracking</p>
-                       <p className="text-sm font-serif italic text-slate-900">{order.status === 'Paid' ? 'Piece is being prepared' : order.status}</p>
+                       <p className="text-sm font-serif italic text-slate-900">
+                         {order.isFulfilled || order.status === 'Shipped' || order.status === 'Fulfilled'
+                           ? 'Piece is dispatched and on the way to the delivery address'
+                           : (order.status === 'Paid' ? 'The piece is being prepared' : order.status)}
+                       </p>
                     </div>
                   </div>
 
@@ -140,9 +144,25 @@ export default function Orders() {
                           </div>
                           <div>
                             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight truncate max-w-[150px]">{item.name}</h4>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
                                 <span className="text-[8px] font-black bg-white px-1.5 py-0.5 rounded border border-slate-100 text-slate-400 uppercase">{item.size}</span>
                                 <span className="text-[8px] font-black bg-white px-1.5 py-0.5 rounded border border-slate-100 text-slate-400 uppercase">{item.color}</span>
+                                {(() => {
+                                    const itemWaist = item.waist || item.customNote?.match(/Waist:\s*([^|]+)/)?.[1]?.trim();
+                                    return itemWaist ? (
+                                        <span className="text-[8px] font-black bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-100 uppercase">
+                                            {itemWaist.toLowerCase().includes('waist') ? itemWaist : `${itemWaist} Waist`}
+                                        </span>
+                                    ) : null;
+                                })()}
+                                {(() => {
+                                    const itemHeight = item.height || item.customNote?.match(/Height:\s*([^|]+)/)?.[1]?.trim();
+                                    return itemHeight ? (
+                                        <span className="text-[8px] font-black bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded border border-amber-100 uppercase">
+                                            {itemHeight}
+                                        </span>
+                                    ) : null;
+                                })()}
                             </div>
                             <p className="text-[10px] font-bold text-slate-900 mt-1 opacity-60">Qty: {item.quantity}</p>
                           </div>

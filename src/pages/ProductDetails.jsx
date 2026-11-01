@@ -29,11 +29,14 @@ export default function ProductDetails() {
             return;
         }
         setHeightError(false);
+        const effectiveWaist = (product?.waistOptions && product.waistOptions.length > 0)
+            ? (selectedWaist || product.waistOptions[0])
+            : '';
         for (let i = 0; i < quantity; i++) {
             addToCart(product, {
                 size: selectedSize,
                 color: selectedColor,
-                waist: selectedWaist,
+                waist: effectiveWaist,
                 customNote: customNote,
                 height: selectedHeight
             });
@@ -47,11 +50,14 @@ export default function ProductDetails() {
             return;
         }
         setHeightError(false);
+        const effectiveWaist = (product?.waistOptions && product.waistOptions.length > 0)
+            ? (selectedWaist || product.waistOptions[0])
+            : '';
         for (let i = 0; i < quantity; i++) {
             addToCart(product, {
                 size: selectedSize,
                 color: selectedColor,
-                waist: selectedWaist,
+                waist: effectiveWaist,
                 customNote: customNote,
                 height: selectedHeight
             });
@@ -286,7 +292,7 @@ export default function ProductDetails() {
                                                     onClick={() => setSelectedWaist(waist)}
                                                     className={`group flex items-center gap-2 px-6 py-3 rounded-xl border-2 transition-all ${selectedWaist === waist ? 'border-slate-900 bg-slate-900 text-white shadow-lg' : 'border-slate-100 hover:border-slate-200 text-slate-600 bg-white'}`}
                                                 >
-                                                    <span className="text-xs font-bold uppercase tracking-tight">{waist} Waist</span>
+                                                    <span className="text-xs font-bold uppercase tracking-tight">{waist.toLowerCase().includes('waist') ? waist : `${waist} Waist`}</span>
                                                 </button>
                                             ))}
                                         </div>

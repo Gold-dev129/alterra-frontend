@@ -572,7 +572,7 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     localStorage.removeItem('alterra_cart');
     if (user) {
       const userKey = user._id || user.email;
@@ -581,7 +581,7 @@ export const ProductProvider = ({ children }) => {
     setCart([]);
     setIsCartOpen(false);
     console.log('ProductContext: Cart explicitly cleared from state and storage');
-  };
+  }, [user]);
 
   const value = {
     products,

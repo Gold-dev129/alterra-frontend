@@ -142,6 +142,14 @@ export default function Checkout() {
                 console.error("Background payment confirmation error:", err);
             });
 
+            // Unlock scroll and clean up Paystack modal elements
+            try {
+                document.body.style.overflow = 'auto';
+                document.querySelectorAll('iframe, .paystack-container, [id*="paystack"], [class*="paystack"]').forEach(el => el.remove());
+            } catch (e) {
+                console.error(e);
+            }
+
             // Redirect user to order-confirmed page
             navigate('/order-confirmed', { 
                 state: { 
@@ -154,6 +162,12 @@ export default function Checkout() {
             });
         } else {
             console.error("Failed to find or create active order in time. Navigating with fallback.");
+            try {
+                document.body.style.overflow = 'auto';
+                document.querySelectorAll('iframe, .paystack-container, [id*="paystack"], [class*="paystack"]').forEach(el => el.remove());
+            } catch (e) {
+                console.error(e);
+            }
             navigate('/order-confirmed', { 
                 state: { 
                     order: {

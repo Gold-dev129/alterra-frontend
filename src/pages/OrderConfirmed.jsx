@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle, ShoppingBag } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 import { useAuth } from '../context/AuthContext';
@@ -10,15 +10,40 @@ export default function OrderConfirmed() {
     const order = location.state?.order;
     const { clearCart } = useProducts();
     const { user } = useAuth();
+    const hasClearedRef = useRef(false);
 
     useEffect(() => {
+        // Unlock body scroll and remove any lingering Paystack overlay/iframes from payment
+        try {
+            document.body.style.overflow = 'auto';
+            const paystackEls = document.querySelectorAll('iframe, .paystack-container, [id*="paystack"], [class*="paystack"]');
+            paystackEls.forEach(el => el.remove());
+        } catch (e) {
+            console.error('Paystack cleanup error:', e);
+        }
+
         if (!order) {
             navigate('/');
-        } else {
+            return;
+        }
+
+        if (!hasClearedRef.current) {
+            hasClearedRef.current = true;
             localStorage.removeItem('alterra_cart');
             try { clearCart(); } catch (e) { console.error(e); }
         }
     }, [order, navigate, clearCart]);
+
+    const handleContinueShopping = () => {
+        navigate('/products');
+        window.location.hash = '#/products';
+    };
+
+    const handleViewOrderHistory = () => {
+        const target = user ? '/my-orders' : '/signup';
+        navigate(target);
+        window.location.hash = `#${target}`;
+    };
 
     if (!order) return null;
 
@@ -77,13 +102,21 @@ export default function OrderConfirmed() {
                         </div>
                     </div>
 
-                    <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to={user ? "/my-orders" : "/signup"} className="px-8 py-4 bg-slate-100 text-slate-900 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all">
+                    <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center relative z-50">
+                        <button
+                            type="button"
+                            onClick={handleViewOrderHistory}
+                            className="px-8 py-4 bg-slate-100 text-slate-900 font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-200 transition-all cursor-pointer shadow-sm active:scale-95"
+                        >
                             View Order History
-                        </Link>
-                        <Link to="/products" className="px-8 py-4 bg-slate-900 text-white font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-800 transition-all">
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleContinueShopping}
+                            className="px-8 py-4 bg-slate-900 text-white font-bold uppercase tracking-widest text-[10px] rounded-full hover:bg-slate-800 transition-all cursor-pointer shadow-md active:scale-95"
+                        >
                             Continue Shopping
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>

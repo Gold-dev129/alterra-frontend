@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { useAuth } from './AuthContext';
 
 const ProductContext = createContext();
 
@@ -13,6 +14,7 @@ export const useProducts = () => {
 };
 
 export const ProductProvider = ({ children }) => {
+  const { user } = useAuth();
   const [products, setProducts] = useState(() => {
     const cached = localStorage.getItem('alterra_products_cache');
     return cached ? JSON.parse(cached) : [];
@@ -44,10 +46,113 @@ export const ProductProvider = ({ children }) => {
 
 
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('alterra_cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const storedUser = localStorage.getItem('user');
+      const currentUser = storedUser ? JSON.parse(storedUser) : null;
+      if (currentUser) {
+        const userKey = currentUser._id || currentUser.email;
+        const userCart = localStorage.getItem(`alterra_cart_${userKey}`);
+        if (userCart) {
+          const parsed = JSON.parse(userCart);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      }
+      const savedCart = localStorage.getItem('alterra_cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch {
+      return [];
+    }
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const cartRef = useRef(cart);
+  const prevUserRef = useRef(user);
+
+  useEffect(() => {
+    cartRef.current = cart;
+  }, [cart]);
+
+  // Handle bag clear on logout, and bag restore on login
+  useEffect(() => {
+    const prevUser = prevUserRef.current;
+    const prevKey = prevUser ? (prevUser._id || prevUser.email) : null;
+    const currentKey = user ? (user._id || user.email) : null;
+
+    if (prevKey && !currentKey) {
+      // User logged out:
+      // 1. Securely save user's current bag items under their specific user key
+      const currentCart = cartRef.current;
+      localStorage.setItem(`alterra_cart_${prevKey}`, JSON.stringify(currentCart));
+      // 2. Clear the active bag in state and session storage
+      localStorage.removeItem('alterra_cart');
+      setCart([]);
+      setIsCartOpen(false);
+    } else if (!prevKey && currentKey) {
+      // User logged in:
+      // Retrieve the pieces saved under this user's account
+      const userCartRaw = localStorage.getItem(`alterra_cart_${currentKey}`);
+      let userSavedItems = [];
+      if (userCartRaw) {
+        try {
+          const parsed = JSON.parse(userCartRaw);
+          if (Array.isArray(parsed)) userSavedItems = parsed;
+        } catch (e) {
+          console.error('Error parsing user cart:', e);
+        }
+      }
+
+      const currentCart = cartRef.current;
+      if (currentCart.length > 0 && userSavedItems.length > 0) {
+        // Merge guest items with saved items without duplicating
+        const merged = [...userSavedItems];
+        currentCart.forEach((guestItem) => {
+          const existingIdx = merged.findIndex(
+            (item) =>
+              item._id === guestItem._id &&
+              item.selectedSize === guestItem.selectedSize &&
+              item.selectedColor === guestItem.selectedColor &&
+              item.selectedWaist === guestItem.selectedWaist &&
+              item.customNote === guestItem.customNote &&
+              (item.selectedHeight || '') === (guestItem.selectedHeight || '')
+          );
+          if (existingIdx !== -1) {
+            merged[existingIdx] = {
+              ...merged[existingIdx],
+              quantity: merged[existingIdx].quantity + guestItem.quantity,
+            };
+          } else {
+            merged.push(guestItem);
+          }
+        });
+        setCart(merged);
+        localStorage.setItem(`alterra_cart_${currentKey}`, JSON.stringify(merged));
+        localStorage.setItem('alterra_cart', JSON.stringify(merged));
+      } else if (userSavedItems.length > 0) {
+        // Restore user's saved bag
+        setCart(userSavedItems);
+        localStorage.setItem('alterra_cart', JSON.stringify(userSavedItems));
+      } else if (currentCart.length > 0) {
+        // Associate current bag with user
+        localStorage.setItem(`alterra_cart_${currentKey}`, JSON.stringify(currentCart));
+      }
+    } else if (prevKey && currentKey && prevKey !== currentKey) {
+      // Switched accounts
+      const currentCart = cartRef.current;
+      localStorage.setItem(`alterra_cart_${prevKey}`, JSON.stringify(currentCart));
+      const userCartRaw = localStorage.getItem(`alterra_cart_${currentKey}`);
+      if (userCartRaw) {
+        try {
+          const parsed = JSON.parse(userCartRaw);
+          setCart(Array.isArray(parsed) ? parsed : []);
+        } catch {
+          setCart([]);
+        }
+      } else {
+        setCart([]);
+      }
+    }
+
+    prevUserRef.current = user;
+  }, [user]);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -176,7 +281,11 @@ export const ProductProvider = ({ children }) => {
   // Sync cart with localStorage
   useEffect(() => {
     localStorage.setItem('alterra_cart', JSON.stringify(cart));
-  }, [cart]);
+    if (user) {
+      const userKey = user._id || user.email;
+      localStorage.setItem(`alterra_cart_${userKey}`, JSON.stringify(cart));
+    }
+  }, [cart, user]);
 
   const filteredProducts = (Array.isArray(products) ? products : []).filter(product => {
     if (!product || !product.name) return false;
@@ -465,10 +574,14 @@ export const ProductProvider = ({ children }) => {
 
   const clearCart = () => {
     localStorage.removeItem('alterra_cart');
+    if (user) {
+      const userKey = user._id || user.email;
+      localStorage.removeItem(`alterra_cart_${userKey}`);
+    }
     setCart([]);
     setIsCartOpen(false);
     console.log('ProductContext: Cart explicitly cleared from state and storage');
-  }
+  };
 
   const value = {
     products,

@@ -55,13 +55,15 @@ export default function Checkout() {
         { name: 'Ibadan', fee: 4000 },
         { name: 'Caleb', fee: 7000 },
         { name: 'Babcock', fee: 6000 },
+        { name: 'Bowen University', fee: 6500 },
         { name: 'Abuja', fee: 8500 },
         { name: 'Other States', fee: 8500 }
     ];
 
     const selectedLocation = deliveryLocations.find(l => 
         l.name.toLowerCase() === (formData.location || '').toLowerCase() ||
-        (formData.location === 'Caleb University' && l.name === 'Caleb')
+        ((formData.location || '').toLowerCase() === 'caleb university' && l.name === 'Caleb') ||
+        ((formData.location || '').toLowerCase() === 'bowen' && l.name === 'Bowen University')
     );
     const shipping = formData.deliveryMethod === 'pickup' 
         ? 0 
